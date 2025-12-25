@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/viewmodels/image_proof_viewmodel.dart';
-import 'dart:math' as math;
 
 /// Real-time performance monitoring dashboard with stunning visualizations
 class PerformanceDashboardView extends StatefulWidget {

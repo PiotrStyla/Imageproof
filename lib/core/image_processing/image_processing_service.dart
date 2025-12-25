@@ -159,14 +159,14 @@ class ImageProcessingService {
   img.Image _applySharpen(img.Image image, Map<String, dynamic> params) {
     final amount = params['amount'] as num? ?? 1.0;
     
-    // Create sharpening kernel
-    final kernel = [
-      [0.0, -1.0, 0.0],
-      [-1.0, 5.0, -1.0],
-      [0.0, -1.0, 0.0],
+    // Create sharpening kernel as flat list
+    final kernel = <num>[
+      0.0, -1.0, 0.0,
+      -1.0, 5.0, -1.0,
+      0.0, -1.0, 0.0,
     ];
     
-    return img.convolution(image, kernel, div: 1, offset: 0);
+    return img.convolution(image, filter: kernel, div: 1, offset: 0);
   }
 
   /// Adjust brightness

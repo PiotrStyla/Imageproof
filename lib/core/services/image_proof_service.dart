@@ -155,7 +155,7 @@ class ImageProofService {
 
     // Calculate average proof size
     final totalSize = allProofs.fold<int>(0, (sum, proof) => sum + proof.proofSize);
-    final averageSize = totalProofs > 0 ? totalSize / totalProofs : 0;
+    final averageSize = totalProofs > 0 ? (totalSize / totalProofs).toDouble() : 0.0;
 
     // Count by algorithm
     final algorithmCounts = <ProofAlgorithm, int>{};

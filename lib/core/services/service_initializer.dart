@@ -5,6 +5,7 @@ import '../image_processing/image_processing_service.dart';
 import '../storage/storage_service.dart';
 import '../navigation/app_router.dart';
 import '../error/error_reporting_service.dart';
+import 'image_proof_service.dart';
 
 /// Global service locator instance
 final GetIt getIt = GetIt.instance;
