@@ -1,0 +1,136 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+.packages
+.flutter-plugins-dependencies
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Security & Secrets - NEVER COMMIT
+*.env
+*.env.*
+.env.local
+.env.*.local
+*.key
+*.keystore
+*.jks
+*.p12
+*.pem
+*.asc
+**/google-services.json
+**/GoogleService-Info.plist
+firebase_options.dart
+secrets.dart
+api_keys.dart
+credentials.json
+
+# Database & Local Storage
+*.db
+*.sqlite
+*.sqlite3
+*.realm
+*.hive
+*.box
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+*.config.dart
+
+# Coverage
+coverage/
+*.lcov
+.test_coverage.dart
+
+# Platform specific
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner.xcworkspace/
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# Web
+web/canvaskit/
+web/assets/
+
+# Temporary & Cache
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+# Documentation that may contain sensitive info
+docs/private/
+docs/internal/
+NOTES.md
+TODO_PRIVATE.md
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS specific
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# IDEs
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# Deployment & CI/CD secrets
+.firebase/
+.github/secrets/
+deploy_key
+deployment_config.yaml
