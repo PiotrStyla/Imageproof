@@ -131,6 +131,8 @@ flutter run -d chrome --web-renderer canvaskit
 
 **Live Demo**: [https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/](https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/)
 
+⚠️ **Note**: First deployment in progress. Site will be live in 2-3 minutes after enabling GitHub Pages.
+
 ## 📖 Usage
 
 ### 1. Generate a Proof
