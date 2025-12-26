@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,16 +23,18 @@ class StorageService {
     _proofCache = await Hive.openBox<String>('proof_cache');
     _metadataCache = await Hive.openBox<String>('metadata_cache');
 
-    // Initialize SQLite for persistent structured storage
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final path = join(documentsDirectory.path, 'vimz_proofs.db');
+    // Initialize SQLite for persistent structured storage (skip on web)
+    if (!kIsWeb) {
+      final documentsDirectory = await getApplicationDocumentsDirectory();
+      final path = join(documentsDirectory.path, 'vimz_proofs.db');
 
-    _database = await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDatabase,
-      onUpgrade: _upgradeDatabase,
-    );
+      _database = await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDatabase,
+        onUpgrade: _upgradeDatabase,
+      );
+    }
 
     _initialized = true;
   }
@@ -73,39 +76,41 @@ class StorageService {
     // Handle database migrations
   }
 
-  /// Save proof with intelligent caching strategy
+  /// Save proof to both SQLite and Hive
   Future<void> saveProof(ImageProof proof) async {
     _ensureInitialized();
 
     final json = proof.toJson();
     final jsonString = jsonEncode(json);
 
-    // Write to SQLite for persistence
-    await _database!.insert(
-      'proofs',
-      {
-        'id': proof.id,
-        'original_image_hash': proof.originalImageHash,
-        'edited_image_hash': proof.editedImageHash,
-        'proof': proof.proof,
-        'transformations': jsonEncode(proof.transformations.map((t) => t.toJson()).toList()),
-        'created_at': proof.createdAt.millisecondsSinceEpoch,
-        'is_anonymous_signer': proof.isAnonymousSigner ? 1 : 0,
-        'signer_id': proof.signerId,
-        'proof_size': proof.proofSize,
-        'verification_status': proof.verificationStatus.toString(),
-        'metadata': jsonEncode(proof.metadata.toJson()),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    // Write to SQLite for persistence (if available)
+    if (_database != null) {
+      await _database!.insert(
+        'proofs',
+        {
+          'id': proof.id,
+          'original_image_hash': proof.originalImageHash,
+          'edited_image_hash': proof.editedImageHash,
+          'proof': proof.proof,
+          'transformations': jsonEncode(proof.transformations.map((t) => t.toJson()).toList()),
+          'created_at': proof.createdAt.millisecondsSinceEpoch,
+          'is_anonymous_signer': proof.isAnonymousSigner ? 1 : 0,
+          'signer_id': proof.signerId,
+          'proof_size': proof.proofSize,
+          'verification_status': proof.verificationStatus.toString(),
+          'metadata': jsonEncode(proof.metadata.toJson()),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
-    // Update FTS index
-    await _database!.execute(
-      'INSERT INTO proofs_fts(id, original_image_hash, edited_image_hash, transformations) VALUES(?, ?, ?, ?)',
-      [proof.id, proof.originalImageHash, proof.editedImageHash, jsonEncode(proof.transformations)],
-    );
+      // Update FTS index
+      await _database!.execute(
+        'INSERT INTO proofs_fts(id, original_image_hash, edited_image_hash, transformations) VALUES(?, ?, ?, ?)',
+        [proof.id, proof.originalImageHash, proof.editedImageHash, jsonEncode(proof.transformations)],
+      );
+    }
 
-    // Cache in Hive for fast access
+    // Cache in Hive for fast access (works on all platforms)
     await _proofCache!.put(proof.id, jsonString);
     
     // Update metadata cache for quick stats
@@ -116,88 +121,116 @@ class StorageService {
   Future<void> updateProof(ImageProof proof) async {
     _ensureInitialized();
 
-    await _database!.update(
-      'proofs',
-      {
-        'verification_status': proof.verificationStatus.toString(),
-        'metadata': jsonEncode(proof.metadata.toJson()),
-      },
-      where: 'id = ?',
-      whereArgs: [proof.id],
-    );
+    if (_database != null) {
+      await _database!.update(
+        'proofs',
+        {
+          'verification_status': proof.verificationStatus.toString(),
+          'metadata': jsonEncode(proof.metadata.toJson()),
+        },
+        where: 'id = ?',
+        whereArgs: [proof.id],
+      );
+    }
 
     // Update cache
-    final jsonString = jsonEncode(proof.toJson());
-    await _proofCache!.put(proof.id, jsonString);
+    await _proofCache!.put(proof.id, jsonEncode(proof.toJson()));
+    await _updateMetadataCache(proof);
   }
 
   /// Get proof by ID with cache-first strategy
   Future<ImageProof?> getProofById(String id) async {
     _ensureInitialized();
 
-    // Check cache first (O(1) lookup)
+    // Check cache first
     final cached = _proofCache!.get(id);
     if (cached != null) {
       return ImageProof.fromJson(jsonDecode(cached));
     }
 
-    // Fallback to database
-    final results = await _database!.query(
-      'proofs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    // Fallback to database (if available)
+    if (_database != null) {
+      final results = await _database!.query(
+        'proofs',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
 
-    if (results.isEmpty) return null;
+      if (results.isNotEmpty) {
+        return _mapToProof(results.first);
+      }
+    }
 
-    final proof = _mapToProof(results.first);
-    
-    // Warm up cache
-    await _proofCache!.put(id, jsonEncode(proof.toJson()));
-    
-    return proof;
+    return null;
   }
 
   /// Get all proofs with smart pagination
   Future<List<ImageProof>> getAllProofs({int? limit, int? offset}) async {
     _ensureInitialized();
 
-    final results = await _database!.query(
-      'proofs',
-      orderBy: 'created_at DESC',
-      limit: limit,
-      offset: offset,
-    );
+    if (_database != null) {
+      final results = await _database!.query(
+        'proofs',
+        orderBy: 'created_at DESC',
+        limit: limit,
+        offset: offset,
+      );
+      return results.map(_mapToProof).toList();
+    }
 
-    return results.map(_mapToProof).toList();
+    // On web, use Hive cache
+    final allKeys = _proofCache!.keys.toList();
+    final proofs = <ImageProof>[];
+    for (final key in allKeys) {
+      final jsonString = _proofCache!.get(key);
+      if (jsonString != null) {
+        proofs.add(ImageProof.fromJson(jsonDecode(jsonString)));
+      }
+    }
+    proofs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return proofs;
   }
 
   /// Advanced search using FTS
   Future<List<ImageProof>> searchProofs(String query) async {
     _ensureInitialized();
 
-    final results = await _database!.rawQuery('''
-      SELECT p.* FROM proofs p
-      JOIN proofs_fts fts ON p.id = fts.id
-      WHERE proofs_fts MATCH ?
-      ORDER BY p.created_at DESC
-    ''', [query]);
+    if (_database != null) {
+      final results = await _database!.rawQuery('''
+        SELECT p.* FROM proofs p
+        JOIN proofs_fts fts ON p.id = fts.id
+        WHERE proofs_fts MATCH ?
+        ORDER BY p.created_at DESC
+      ''', [query]);
+      return results.map(_mapToProof).toList();
+    }
 
-    return results.map(_mapToProof).toList();
+    // On web, simple string search in cache
+    final allProofs = await getAllProofs();
+    final lowerQuery = query.toLowerCase();
+    return allProofs.where((proof) => 
+      proof.originalImageHash.toLowerCase().contains(lowerQuery) ||
+      proof.editedImageHash.toLowerCase().contains(lowerQuery)
+    ).toList();
   }
 
-  /// Get proofs by signer with optimized index
+  /// Get proofs by signer ID
   Future<List<ImageProof>> getProofsBySigner(String signerId) async {
     _ensureInitialized();
 
-    final results = await _database!.query(
-      'proofs',
-      where: 'signer_id = ?',
-      whereArgs: [signerId],
-      orderBy: 'created_at DESC',
-    );
+    if (_database != null) {
+      final results = await _database!.query(
+        'proofs',
+        where: 'signer_id = ?',
+        whereArgs: [signerId],
+        orderBy: 'created_at DESC',
+      );
+      return results.map(_mapToProof).toList();
+    }
 
-    return results.map(_mapToProof).toList();
+    // On web, filter from cache
+    final allProofs = await getAllProofs();
+    return allProofs.where((proof) => proof.signerId == signerId).toList();
   }
 
   /// Get proofs by date range
@@ -207,33 +240,42 @@ class StorageService {
   ) async {
     _ensureInitialized();
 
-    final results = await _database!.query(
-      'proofs',
-      where: 'created_at BETWEEN ? AND ?',
-      whereArgs: [
-        startDate.millisecondsSinceEpoch,
-        endDate.millisecondsSinceEpoch,
-      ],
-      orderBy: 'created_at DESC',
-    );
+    if (_database != null) {
+      final results = await _database!.query(
+        'proofs',
+        where: 'created_at BETWEEN ? AND ?',
+        whereArgs: [
+          startDate.millisecondsSinceEpoch,
+          endDate.millisecondsSinceEpoch,
+        ],
+        orderBy: 'created_at DESC',
+      );
+      return results.map(_mapToProof).toList();
+    }
 
-    return results.map(_mapToProof).toList();
+    // On web, filter from cache
+    final allProofs = await getAllProofs();
+    return allProofs.where((proof) => 
+      proof.createdAt.isAfter(startDate) && proof.createdAt.isBefore(endDate)
+    ).toList();
   }
 
   /// Delete proof and invalidate cache
   Future<void> deleteProof(String id) async {
     _ensureInitialized();
 
-    await _database!.delete(
-      'proofs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (_database != null) {
+      await _database!.delete(
+        'proofs',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
 
-    await _database!.execute(
-      'DELETE FROM proofs_fts WHERE id = ?',
-      [id],
-    );
+      await _database!.execute(
+        'DELETE FROM proofs_fts WHERE id = ?',
+        [id],
+      );
+    }
 
     await _proofCache!.delete(id);
   }
@@ -242,12 +284,14 @@ class StorageService {
   Future<void> deleteProofs(List<String> ids) async {
     _ensureInitialized();
 
-    await _database!.transaction((txn) async {
-      for (final id in ids) {
-        await txn.delete('proofs', where: 'id = ?', whereArgs: [id]);
-        await txn.execute('DELETE FROM proofs_fts WHERE id = ?', [id]);
-      }
-    });
+    if (_database != null) {
+      await _database!.transaction((txn) async {
+        for (final id in ids) {
+          await txn.delete('proofs', where: 'id = ?', whereArgs: [id]);
+          await txn.execute('DELETE FROM proofs_fts WHERE id = ?', [id]);
+        }
+      });
+    }
 
     for (final id in ids) {
       await _proofCache!.delete(id);
@@ -258,11 +302,21 @@ class StorageService {
   Future<StorageStatistics> getStatistics() async {
     _ensureInitialized();
 
-    final countResult = await _database!.rawQuery('SELECT COUNT(*) as count FROM proofs');
-    final totalProofs = Sqflite.firstIntValue(countResult) ?? 0;
+    int totalProofs = 0;
+    int totalSize = 0;
 
-    final sizeResult = await _database!.rawQuery('SELECT SUM(proof_size) as total_size FROM proofs');
-    final totalSize = Sqflite.firstIntValue(sizeResult) ?? 0;
+    if (_database != null) {
+      final countResult = await _database!.rawQuery('SELECT COUNT(*) as count FROM proofs');
+      totalProofs = Sqflite.firstIntValue(countResult) ?? 0;
+
+      final sizeResult = await _database!.rawQuery('SELECT SUM(proof_size) as total_size FROM proofs');
+      totalSize = Sqflite.firstIntValue(sizeResult) ?? 0;
+    } else {
+      // On web, count from cache
+      totalProofs = _proofCache!.length;
+      final allProofs = await getAllProofs();
+      totalSize = allProofs.fold(0, (sum, proof) => sum + proof.proofSize);
+    }
 
     final cacheSize = _proofCache!.length;
 
@@ -340,12 +394,10 @@ class StorageService {
   Future<void> importProofs(String jsonData) async {
     final proofsList = jsonDecode(jsonData) as List;
     
-    await _database!.transaction((txn) async {
-      for (final proofJson in proofsList) {
-        final proof = ImageProof.fromJson(proofJson);
-        await saveProof(proof);
-      }
-    });
+    for (final proofJson in proofsList) {
+      final proof = ImageProof.fromJson(proofJson);
+      await saveProof(proof);
+    }
   }
 }
 
