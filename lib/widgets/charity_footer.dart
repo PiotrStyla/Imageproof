@@ -140,7 +140,7 @@ class CharityFooter extends StatelessWidget {
               _FooterLink(
                 text: 'GitHub',
                 onTap: () => _launchUrl(
-                  'https://github.com/PiotrStyla/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs',
+                  'https://github.com/PiotrStyla/Imageproof',
                 ),
               ),
             ],

@@ -10,7 +10,7 @@
 
 Combat deepfakes & misinformation with math, not trust.
 
-🔗 https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/
+🔗 https://piotrstyla.github.io/Imageproof/
 
 #zkSNARKs #Privacy #CryptoVerification #ImageAuthenticity #WebAssembly
 
@@ -44,8 +44,8 @@ VIMz implements folding-based zkSNARKs (Zero-Knowledge Succinct Non-Interactive 
 **🚀 Try it Now:**
 The web app is live and open-source. No installation needed - it runs entirely in your browser with client-side cryptography.
 
-🔗 Live Demo: https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/
-🔗 GitHub: https://github.com/PiotrStyla/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs
+🔗 Live Demo: https://piotrstyla.github.io/Imageproof/
+🔗 GitHub: https://github.com/PiotrStyla/Imageproof
 
 **Tech Stack:**
 Flutter Web, Dart, Nova Folding Protocol, BN254 Elliptic Curves, WebAssembly, GPU Compute Shaders

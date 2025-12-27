@@ -129,7 +129,7 @@ flutter run -d android
 flutter run -d chrome --web-renderer canvaskit
 ```
 
-**Live Demo**: [https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/](https://piotrstyla.github.io/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs/)
+**Live Demo**: [https://piotrstyla.github.io/Imageproof/](https://piotrstyla.github.io/Imageproof/)
 
 ## 🎯 Why Use VIMz Private Proofs?
 

@@ -146,7 +146,7 @@ class TermsOfServiceView extends StatelessWidget {
                     '• Report issues and bugs\n'
                     '• Contribute improvements\n'
                     '• Fork and modify for your own use\n\n'
-                    'GitHub Repository: https://github.com/PiotrStyla/Private-Proofs-of-Image-Manipulation-using-Folding-based-zkSNARKs',
+                    'GitHub Repository: https://github.com/PiotrStyla/Imageproof',
               ),
               _buildSection(
                 context,
