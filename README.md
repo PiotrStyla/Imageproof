@@ -7,7 +7,7 @@ A revolutionary Flutter application implementing folding-based zkSNARKs for effi
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.29+-blue.svg)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-3.7+-blue.svg)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-orange.svg)](LICENSE)
 
 ## 🚀 Revolutionary Features
 
@@ -386,7 +386,15 @@ Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTIN
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License** (CC BY-NC-SA 4.0).
+
+**What this means:**
+- ✅ **Free for personal, academic, and research use**
+- ✅ You can modify and share the code
+- ❌ **Commercial use requires explicit written permission**
+- 📧 For commercial licensing: p.styla@gmail.com
+
+See the [LICENSE](LICENSE) file for full details.
 
 ## 🙏 Acknowledgments
 

@@ -1,0 +1,72 @@
+VIMz Private Proofs License
+Copyright (c) 2025 Piotr "hipcio" Styla
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+=======================================================================
+
+SUMMARY:
+
+You are free to:
+- Share: copy and redistribute the material in any medium or format
+- Adapt: remix, transform, and build upon the material
+
+Under the following terms:
+- Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made
+- NonCommercial: You may NOT use the material for commercial purposes without explicit written permission
+- ShareAlike: If you remix, transform, or build upon the material, you must distribute your contributions under the same license
+
+=======================================================================
+
+COMMERCIAL USE RESTRICTIONS:
+
+⚠️ IMPORTANT: Commercial use is STRICTLY PROHIBITED without prior written approval.
+
+Commercial use includes, but is not limited to:
+- Using this software in a commercial product or service
+- Offering this software as a paid service
+- Using this software to generate revenue directly or indirectly
+- Integrating this software into commercial applications
+- Deploying this software in a commercial environment
+
+APPROVAL PROCESS:
+Before any commercial deployment or use, you MUST:
+1. Contact the copyright holder for explicit written permission
+2. Discuss terms, conditions, and licensing fees if applicable
+3. Obtain signed commercial license agreement
+4. Wait for written approval before proceeding
+
+Any commercial use without prior written approval is a violation of this license and subject to legal action.
+
+For commercial licensing inquiries and approval requests:
+Email: p.styla@gmail.com
+X (Twitter): @PiotrSty
+
+Response time: Typically within 3-5 business days
+
+=======================================================================
+
+ACADEMIC AND RESEARCH USE:
+
+This software may be used freely for:
+- Academic research and education
+- Non-profit organizations
+- Personal projects
+- Open-source contributions (under the same license)
+
+If you use this software in academic work, please cite:
+"VIMz: Private Proofs of Image Manipulation using Folding-based zkSNARKs"
+PETS 2025 - Stefan Dziembowski, Shahriar Ebrahimi, Parisa Hassanizadeh
+
+=======================================================================
+
+FULL LICENSE TEXT:
+
+To view the complete Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License, visit:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+=======================================================================
+
+DISCLAIMER:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

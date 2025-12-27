@@ -47,12 +47,29 @@ class TermsOfServiceView extends StatelessWidget {
               _buildSection(
                 context,
                 'Use License',
-                'This project is licensed under the MIT License. You are granted permission to:\n\n'
-                    '• Use the Service for personal or commercial purposes\n'
-                    '• Modify the source code\n'
-                    '• Distribute copies\n'
-                    '• Sublicense\n\n'
+                'This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).\n\n'
+                    'You are FREE to:\n'
+                    '• Use for personal, academic, and research purposes\n'
+                    '• Modify and adapt the source code\n'
+                    '• Share and redistribute\n\n'
+                    'Under these conditions:\n'
+                    '• Attribution: Give appropriate credit\n'
+                    '• NonCommercial: NO commercial use without permission\n'
+                    '• ShareAlike: Distribute modifications under same license\n\n'
                     'See the LICENSE file in our GitHub repository for full details.',
+              ),
+              _buildSection(
+                context,
+                'Commercial Use Restrictions',
+                'Commercial use is PROHIBITED without explicit written permission.\n\n'
+                    'Commercial use includes:\n'
+                    '• Using in commercial products or services\n'
+                    '• Offering as a paid service\n'
+                    '• Using to generate revenue directly or indirectly\n'
+                    '• Integrating into commercial applications\n\n'
+                    'For commercial licensing inquiries:\n'
+                    'Email: p.styla@gmail.com\n'
+                    'X (Twitter): @PiotrSty',
               ),
               _buildSection(
                 context,
