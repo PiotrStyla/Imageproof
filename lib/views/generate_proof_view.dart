@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:convert';
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -677,6 +679,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     );
 
     if (proof != null && mounted) {
+      // Download the proof file
+      _downloadProofFile(proof);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -753,7 +758,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Your proof file has been downloaded. Use it to verify your image authenticity!',
+                        'Proof file downloaded! Check your Downloads folder for the .json file.',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.blue.shade900,
@@ -813,5 +818,25 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _downloadProofFile(ImageProof proof) {
+    try {
+      // Convert proof to JSON
+      final proofJson = jsonEncode(proof.toJson());
+      final bytes = utf8.encode(proofJson);
+      final blob = html.Blob([bytes]);
+      
+      // Create download link
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'vimz_proof_${proof.id.substring(0, 8)}.json')
+        ..click();
+      
+      // Clean up
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      debugPrint('Error downloading proof file: $e');
+    }
   }
 }
