@@ -427,6 +427,39 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               ],
             ),
             const SizedBox(height: 16),
+            Text(
+              'Select transformations that match the operations you applied',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Why this matters: Transformations are cryptographically proven in the zkSNARK. Verifiers can see exactly what operations were applied (crop, rotate, etc.) without seeing the original image.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 12,

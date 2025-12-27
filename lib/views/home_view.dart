@@ -69,35 +69,43 @@ class HomeView extends StatelessWidget {
               context,
               '1',
               'Generate Proof',
-              'Upload original + edited images → Wait ~3 minutes → Get proof file (.json)',
+              'Upload original + edited images, select transformations applied → Wait ~3 minutes → Download 2 files: proof.json + edited image',
               Icons.add_photo_alternate,
             ),
             const SizedBox(height: 12),
             _buildQuickStep(
               context,
               '2',
+              'Share Both Files',
+              'Send proof.json + edited_image.png to verifier (keep original private)',
+              Icons.share,
+            ),
+            const SizedBox(height: 12),
+            _buildQuickStep(
+              context,
+              '3',
               'Verify Authenticity',
-              'Upload the proof file (.json) → See verification results instantly',
+              'Upload proof.json → Verify transformations → Upload edited_image.png → Confirm hash match',
               Icons.verified_user,
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: Colors.blue.shade200),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 20),
+                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Important: For verification, upload the PROOF FILE (.json), NOT the image',
+                      'Transformations prove the exact operations applied (crop, rotate, etc.), not just that the image was edited',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.orange.shade900,
+                        color: Colors.blue.shade900,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
