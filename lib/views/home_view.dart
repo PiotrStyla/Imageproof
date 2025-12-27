@@ -21,6 +21,8 @@ class HomeView extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
+                    _buildHowToSection(context),
+                    const SizedBox(height: 32),
                     _buildStatsCards(context),
                     const SizedBox(height: 32),
                     _buildQuickActions(context),
@@ -37,6 +39,131 @@ class HomeView extends StatelessWidget {
           const CookieConsentBanner(),
         ],
       ),
+    );
+  }
+
+  Widget _buildHowToSection(BuildContext context) {
+    return Card(
+      elevation: 2,
+      color: Colors.blue.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'Quick Start Guide',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade900,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildQuickStep(
+              context,
+              '1',
+              'Generate Proof',
+              'Upload original + edited images → Get cryptographic proof file (.json)',
+              Icons.add_photo_alternate,
+            ),
+            const SizedBox(height: 12),
+            _buildQuickStep(
+              context,
+              '2',
+              'Verify Authenticity',
+              'Upload the proof file (.json) → See verification results instantly',
+              Icons.verified_user,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Important: For verification, upload the PROOF FILE (.json), NOT the image',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.orange.shade900,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStep(
+    BuildContext context,
+    String number,
+    String title,
+    String description,
+    IconData icon,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Icon(icon, color: Colors.blue.shade700, size: 24),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade900,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade700,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
