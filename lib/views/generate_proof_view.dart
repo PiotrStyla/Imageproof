@@ -510,16 +510,54 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   }
 
   Widget _buildGenerateButton(ImageProofViewModel viewModel) {
-    return ElevatedButton.icon(
-      onPressed: _transformations.isEmpty ? null : () => _generateProof(viewModel),
-      icon: const Icon(Icons.security),
-      label: const Text('Generate Zero-Knowledge Proof'),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(20),
-        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey,
+    final isGenerating = viewModel.isGenerating;
+    final canGenerate = _transformations.isNotEmpty && !isGenerating;
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      child: ElevatedButton(
+        onPressed: canGenerate ? () => _generateProof(viewModel) : null,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 48,
+            vertical: 20,
+          ),
+          textStyle: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: isGenerating
+              ? Row(
+                  key: const ValueKey('generating'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Generating Proof...'),
+                  ],
+                )
+              : Row(
+                  key: const ValueKey('ready'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.security),
+                    const SizedBox(width: 8),
+                    const Text('Generate Zero-Knowledge Proof'),
+                  ],
+                ),
+        ),
       ),
     );
   }
