@@ -196,11 +196,19 @@ class HomeView extends StatelessWidget {
               ],
             ),
           ),
-          child: const Center(
-            child: Icon(
-              Icons.security,
-              size: 48,
-              color: Colors.white70,
+          child: Center(
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: const Icon(
+                Icons.verified_user_rounded,
+                size: 36,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
