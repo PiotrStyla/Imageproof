@@ -17,6 +17,7 @@ class ImageProofViewModel extends ChangeNotifier {
   double _generationProgress = 0.0;
   ImageProof? _currentProof;
   ProofStatistics? _statistics;
+  Uint8List? _lastOptimizedEditedImage;
 
   ImageProofViewModel({
     required ImageProofService proofService,
@@ -36,6 +37,7 @@ class ImageProofViewModel extends ChangeNotifier {
   ImageProof? get currentProof => _currentProof;
   ProofStatistics? get statistics => _statistics;
   bool get hasError => _error != null;
+  Uint8List? get lastOptimizedEditedImage => _lastOptimizedEditedImage;
 
   /// Load all proofs from storage
   Future<void> _loadProofs() async {
@@ -88,6 +90,9 @@ class ImageProofViewModel extends ChangeNotifier {
       final optimizedEdited = await _imageProcessingService.optimizeForProofGeneration(editedImage);
 
       _setProgress(0.4);
+
+      // Store optimized edited image for download
+      _lastOptimizedEditedImage = optimizedEdited;
 
       // Generate proof
       final proof = await _proofService.generateProof(

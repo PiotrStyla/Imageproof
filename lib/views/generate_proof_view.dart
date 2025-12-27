@@ -758,7 +758,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Proof file downloaded! Check your Downloads folder for the .json file.',
+                        '2 files downloaded:\n• Proof (.json) - Share with verifier\n• Edited image (.png) - Share for hash verification',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.blue.shade900,
@@ -834,6 +834,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         ..click();
       
       html.Url.revokeObjectUrl(url);
+
+      // Also download the optimized edited image for verification
+      _downloadOptimizedEditedImage(proof);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -843,6 +846,25 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           ),
         );
       }
+    }
+  }
+
+  void _downloadOptimizedEditedImage(ImageProof proof) {
+    try {
+      final viewModel = Provider.of<ImageProofViewModel>(context, listen: false);
+      if (viewModel.lastOptimizedEditedImage != null) {
+        // Download the optimized edited image
+        final blob = html.Blob([viewModel.lastOptimizedEditedImage!], 'image/png');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute('download', 'edited_image_${proof.id.substring(0, 8)}.png')
+          ..click();
+        
+        html.Url.revokeObjectUrl(url);
+      }
+    } catch (e) {
+      // Log error but don't fail the proof download
+      debugPrint('Could not download edited image: $e');
     }
   }
 }
