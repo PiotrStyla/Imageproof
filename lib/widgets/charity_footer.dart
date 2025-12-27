@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 
 /// Charity support banner displayed at the bottom of pages
 class CharityFooter extends StatelessWidget {
@@ -126,15 +127,15 @@ class CharityFooter extends StatelessWidget {
             children: [
               _FooterLink(
                 text: 'Privacy Policy',
-                onTap: () => Navigator.pushNamed(context, '/privacy'),
+                onTap: () => context.go('/privacy'),
               ),
               _FooterLink(
                 text: 'Cookie Policy',
-                onTap: () => Navigator.pushNamed(context, '/cookies'),
+                onTap: () => context.go('/cookies'),
               ),
               _FooterLink(
                 text: 'Terms of Service',
-                onTap: () => Navigator.pushNamed(context, '/terms'),
+                onTap: () => context.go('/terms'),
               ),
               _FooterLink(
                 text: 'GitHub',

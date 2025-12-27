@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 /// Cookie consent banner displayed on first visit
 class CookieConsentBanner extends StatefulWidget {
@@ -96,7 +97,7 @@ class _CookieConsentBannerState extends State<CookieConsentBanner> {
                   alignment: WrapAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/privacy'),
+                      onPressed: () => context.go('/privacy'),
                       child: const Text('Privacy Policy'),
                     ),
                     OutlinedButton(
