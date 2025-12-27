@@ -677,6 +677,31 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                         color: Colors.grey[600],
                       ),
                 ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Note: Images are optimized during proof generation (max 1024px, PNG format). If your image has been re-saved or modified after proof generation, hashes may not match.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[900],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 20),
                 if (_uploadedImage != null && _imageMatchResult != null)
                   _buildImageMatchResult()

@@ -823,20 +823,26 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   void _downloadProofFile(ImageProof proof) {
     try {
       // Convert proof to JSON
-      final proofJson = jsonEncode(proof.toJson());
-      final bytes = utf8.encode(proofJson);
-      final blob = html.Blob([bytes]);
+      final jsonString = jsonEncode(proof.toJson());
+      final bytes = utf8.encode(jsonString);
+      final blob = html.Blob([bytes], 'application/json');
       
       // Create download link
       final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
+      html.AnchorElement(href: url)
         ..setAttribute('download', 'vimz_proof_${proof.id.substring(0, 8)}.json')
         ..click();
       
-      // Clean up
       html.Url.revokeObjectUrl(url);
     } catch (e) {
-      debugPrint('Error downloading proof file: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading proof: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
