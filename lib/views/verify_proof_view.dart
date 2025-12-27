@@ -799,7 +799,6 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
       }
     }
   }
-  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
