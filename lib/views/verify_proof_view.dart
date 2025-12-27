@@ -646,9 +646,12 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             ),
           ],
         );
+      },
+    );
+  }
 
-      Widget _buildImageVerificationSection(ImageProof proof) {
-        return Card(
+  Widget _buildImageVerificationSection(ImageProof proof) {
+    return Card(
           elevation: 4,
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -712,7 +715,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
 
   Widget _buildImageMatchResult() {
     final isMatch = _imageMatchResult ?? false;
-        return Container(
+    return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: isMatch ? Colors.green.shade50 : Colors.red.shade50,
