@@ -33,7 +33,7 @@ class TermsOfServiceView extends StatelessWidget {
               _buildSection(
                 context,
                 'Acceptance of Terms',
-                'By accessing and using VIMz Private Proofs ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.',
+                'By accessing and using SealZero ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.',
               ),
               _buildSection(
                 context,

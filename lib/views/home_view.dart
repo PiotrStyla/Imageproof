@@ -182,7 +182,7 @@ class HomeView extends StatelessWidget {
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
         title: const Text(
-          'VIMz Private Proofs',
+          'SealZero',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         background: Container(

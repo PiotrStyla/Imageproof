@@ -1,6 +1,7 @@
-# VIMz Private Proofs 🔐
+# SealZero 🔐
 
-> **Zero-Knowledge Proofs for Image Manipulation Authentication**  
+> **Zero-Knowledge Proofs for Image Authentication**  
+> Prove authenticity without revealing secrets
 > Based on the PETS 2025 paper by Dziembowski et al.
 
 A revolutionary Flutter application implementing folding-based zkSNARKs for efficiently proving image authenticity without revealing source content. Achieves 13-25% faster proof generation, <1s verification, and <11KB proof sizes.
@@ -31,7 +32,7 @@ A revolutionary Flutter application implementing folding-based zkSNARKs for effi
 
 ## 📊 Performance Benchmarks
 
-| Metric | VIMz | Competition | Improvement |
+| Metric | SealZero | Competition | Improvement |
 |--------|------|-------------|-------------|
 | **Proof Generation** | ~25s (8K) | ~33s | **25% faster** |
 | **Verification Time** | <1s | ~3s | **3x faster** |
@@ -129,9 +130,9 @@ flutter run -d android
 flutter run -d chrome --web-renderer canvaskit
 ```
 
-**Live Demo**: [https://piotrstyla.github.io/Imageproof/](https://piotrstyla.github.io/Imageproof/)
+**Live Demo**: [https://www.sealzero.dev](https://www.sealzero.dev)
 
-## 🎯 Why Use VIMz Private Proofs?
+## 🎯 Why Use SealZero?
 
 ### **For Content Creators & Journalists**
 - **Prove Authenticity**: Demonstrate your images haven't been maliciously altered

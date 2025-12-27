@@ -63,7 +63,7 @@ class PrivacyPolicyView extends StatelessWidget {
               _buildSection(
                 context,
                 'Data We Collect',
-                'VIMz Private Proofs is a client-side application that runs entirely in your browser. We do NOT collect, store, or transmit any personal data to our servers.\n\n'
+                'SealZero is a client-side application that runs entirely in your browser. We do NOT collect, store, or transmit any personal data to our servers.\n\n'
                     '• Images you upload are processed locally in your browser\n'
                     '• Generated proofs are stored locally using browser storage (IndexedDB via Hive)\n'
                     '• No user accounts or authentication required\n'

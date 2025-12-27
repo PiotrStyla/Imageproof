@@ -1,5 +1,5 @@
 name: vimz_private_proofs
-description: "VIMz Private Proofs - Zero-knowledge proofs for image manipulation authentication"
+description: "SealZero - Zero-knowledge proofs for image authentication. Prove without revealing."
 publish_to: 'none'
 
 # build by specifying --build-name and --build-number, respectively.

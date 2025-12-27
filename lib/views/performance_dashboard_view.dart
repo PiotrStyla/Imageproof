@@ -226,7 +226,7 @@ class _PerformanceDashboardViewState extends State<PerformanceDashboardView>
             const SizedBox(height: 32),
             _buildComparisonBar(
               'Proof Size',
-              'VIMz',
+              'SealZero',
               0.1,
               Colors.blue,
               '10.8 KB',
@@ -242,7 +242,7 @@ class _PerformanceDashboardViewState extends State<PerformanceDashboardView>
             const SizedBox(height: 32),
             _buildComparisonBar(
               'Memory Usage',
-              'VIMz',
+              'SealZero',
               0.65,
               Colors.purple,
               '9.2 GB',
@@ -337,7 +337,7 @@ class _PerformanceDashboardViewState extends State<PerformanceDashboardView>
                 Icon(Icons.emoji_events, color: Colors.green.shade700, size: 32),
                 const SizedBox(width: 12),
                 Text(
-                  'VIMz Performance Targets',
+                  'SealZero Performance Targets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade700,

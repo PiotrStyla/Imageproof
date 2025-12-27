@@ -38,7 +38,7 @@ class CookiePolicyView extends StatelessWidget {
               _buildSection(
                 context,
                 'How We Use Cookies',
-                'VIMz Private Proofs uses minimal cookies and browser storage technologies for essential functionality only. We do NOT use cookies for tracking or advertising.',
+                'SealZero uses minimal cookies and browser storage technologies for essential functionality only. We do NOT use cookies for tracking or advertising.',
               ),
               _buildSection(
                 context,

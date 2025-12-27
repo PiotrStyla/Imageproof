@@ -148,7 +148,7 @@ class CharityFooter extends StatelessWidget {
           const SizedBox(height: 24),
           // Copyright
           Text(
-            '© ${DateTime.now().year} VIMz Private Proofs. Built with ❤️ using Flutter',
+            '© ${DateTime.now().year} SealZero. Built with ❤️ using Flutter',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white.withOpacity(0.7),

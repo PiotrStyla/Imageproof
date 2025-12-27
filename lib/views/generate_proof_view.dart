@@ -905,7 +905,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       // Create download link
       final url = html.Url.createObjectUrlFromBlob(blob);
       html.AnchorElement(href: url)
-        ..setAttribute('download', 'vimz_proof_${proof.id.substring(0, 8)}.json')
+        ..setAttribute('download', 'sealzero_proof_${proof.id.substring(0, 8)}.json')
         ..click();
       
       html.Url.revokeObjectUrl(url);

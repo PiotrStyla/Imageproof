@@ -1,8 +1,8 @@
-# Social Media Content - VIMz Private Proofs
+# Social Media Content - SealZero
 
 ## 🐦 X (Twitter) Post
 
-🔐 Just launched VIMz Private Proofs - prove your images are authentic without revealing the original! 
+🔐 Just launched SealZero - prove your images are authentic without revealing secrets! 
 
 ✨ Zero-knowledge cryptography meets image verification
 ⚡ 25% faster than competitors, 90% smaller proofs (<11KB!)
@@ -10,7 +10,7 @@
 
 Combat deepfakes & misinformation with math, not trust.
 
-🔗 https://piotrstyla.github.io/Imageproof/
+🔗 https://www.sealzero.dev
 
 #zkSNARKs #Privacy #CryptoVerification #ImageAuthenticity #WebAssembly
 
@@ -18,15 +18,15 @@ Combat deepfakes & misinformation with math, not trust.
 
 ## 💼 LinkedIn Post
 
-**Introducing VIMz Private Proofs: Zero-Knowledge Image Authentication for the Modern Web**
+**Introducing SealZero: Zero-Knowledge Image Authentication for the Modern Web**
 
-I'm excited to share VIMz Private Proofs, a cutting-edge web application that solves a critical challenge in our digital age: proving image authenticity without compromising privacy.
+I'm excited to share SealZero, a cutting-edge web application that solves a critical challenge in our digital age: proving image authenticity without compromising privacy.
 
 **🎯 The Problem:**
 In an era of deepfakes and misinformation, how do you prove an image is authentic without revealing sensitive originals? Journalists need to protect sources. Researchers need to safeguard unpublished data. Content creators need to maintain creative control.
 
 **🔬 The Solution:**
-VIMz implements folding-based zkSNARKs (Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge) - the same cryptographic technology securing blockchain transactions - for image verification. Based on peer-reviewed research from PETS 2025.
+SealZero implements folding-based zkSNARKs (Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge) - the same cryptographic technology securing blockchain transactions - for image verification. Based on peer-reviewed research from PETS 2025.
 
 **💡 Key Innovations:**
 • 25% faster proof generation than existing solutions
@@ -44,7 +44,7 @@ VIMz implements folding-based zkSNARKs (Zero-Knowledge Succinct Non-Interactive 
 **🚀 Try it Now:**
 The web app is live and open-source. No installation needed - it runs entirely in your browser with client-side cryptography.
 
-🔗 Live Demo: https://piotrstyla.github.io/Imageproof/
+🔗 Live Demo: https://www.sealzero.dev
 🔗 GitHub: https://github.com/PiotrStyla/Imageproof
 
 **Tech Stack:**
