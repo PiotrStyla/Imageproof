@@ -1,0 +1,12 @@
+# SealZero - Robots.txt
+# Allow all search engines to crawl the site
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.sealzero.dev/sitemap.xml
+
+# Block access to service worker and generated files
+Disallow: /flutter_service_worker.js
+Disallow: /version.json
