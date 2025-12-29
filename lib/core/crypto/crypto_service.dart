@@ -253,7 +253,7 @@ class CryptoService {
       leaves.add(Uint8List.fromList(hash.bytes));
     }
     
-    return MerkleTree.build(leaves);
+    return await MerkleTree.buildAsync(leaves, _hashAlgorithm);
   }
 
   // Compute intermediate transformation states
@@ -381,12 +381,13 @@ class MerkleTree {
   
   MerkleTree(this.root, this.leaves);
   
-  static MerkleTree build(List<Uint8List> leaves) {
+  static Future<MerkleTree> buildAsync(List<Uint8List> leaves, Blake2b hashAlgorithm) async {
     if (leaves.isEmpty) {
       return MerkleTree(Uint8List(32), []);
     }
     
     var currentLevel = leaves;
+    int batchCounter = 0;
     
     while (currentLevel.length > 1) {
       final nextLevel = <Uint8List>[];
@@ -397,8 +398,15 @@ class MerkleTree {
             ...currentLevel[i],
             ...currentLevel[i + 1],
           ]);
-          final hash = sha256.convert(combined);
+          // Use async hashing to avoid blocking UI
+          final hash = await hashAlgorithm.hash(combined);
           nextLevel.add(Uint8List.fromList(hash.bytes));
+          
+          // Yield to event loop every 100 operations to keep UI responsive
+          batchCounter++;
+          if (batchCounter % 100 == 0) {
+            await Future.delayed(Duration.zero);
+          }
         } else {
           nextLevel.add(currentLevel[i]);
         }
