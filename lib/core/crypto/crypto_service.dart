@@ -230,6 +230,13 @@ class CryptoService {
     ];
   }
 
+  List<Constraint> _createRegionConstraints(Map<String, dynamic> params) {
+    return [
+      Constraint('region_bounds_verification', params),
+      Constraint('pixel_merkle_proof', params),
+    ];
+  }
+
   List<Constraint> _createGenericConstraints(Map<String, dynamic> params) {
     return [Constraint('generic_transformation', params)];
   }
