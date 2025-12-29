@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../core/viewmodels/image_proof_viewmodel.dart';
 import '../core/models/image_proof.dart';
+import 'package:image/image.dart' as img;
 
 /// Revolutionary proof generation view with drag-drop and real-time preview
 class GenerateProofView extends StatefulWidget {
@@ -24,6 +25,12 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   String? _signerId;
 
   final ImagePicker _picker = ImagePicker();
+  
+  // Interactive region selection
+  Offset? _selectionStart;
+  Offset? _selectionEnd;
+  TransformationType? _activeSelectionType;
+  final GlobalKey _imageKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -323,18 +330,13 @@ class _GenerateProofViewState extends State<GenerateProofView> {
             ],
           ),
         ),
-        Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: _buildImageUploadCard(
-              title: 'Original Image',
-              subtitle: 'Upload your unedited photo/document - the app will apply blur/redact for you',
-              image: _originalImage,
-              onUpload: () => _pickImage(isOriginal: true),
-              icon: Icons.upload_file,
-              color: Colors.blue,
-            ),
-          ),
+        _buildImageUploadCard(
+          title: 'Original Image',
+          subtitle: 'Upload your unedited photo/document - the app will apply blur/redact for you',
+          image: _originalImage,
+          onUpload: () => _pickImage(isOriginal: true),
+          icon: Icons.upload_file,
+          color: Colors.blue,
         ),
       ],
     );
@@ -402,29 +404,94 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 )
               : ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.memory(
-                        image,
-                        fit: BoxFit.cover,
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black54,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _originalImage = null;
-                            });
-                          },
+                  child: GestureDetector(
+                    onPanStart: _activeSelectionType != null ? (details) {
+                      setState(() {
+                        _selectionStart = details.localPosition;
+                        _selectionEnd = details.localPosition;
+                      });
+                    } : null,
+                    onPanUpdate: _activeSelectionType != null ? (details) {
+                      setState(() {
+                        _selectionEnd = details.localPosition;
+                      });
+                    } : null,
+                    onPanEnd: _activeSelectionType != null ? (details) {
+                      _createTransformationFromSelection();
+                    } : null,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.memory(
+                          key: _imageKey,
+                          image,
+                          fit: BoxFit.contain,
                         ),
-                      ),
-                    ],
+                        if (_selectionStart != null && _selectionEnd != null)
+                          CustomPaint(
+                            painter: _SelectionPainter(
+                              start: _selectionStart!,
+                              end: _selectionEnd!,
+                              color: _getSelectionColor(),
+                            ),
+                          ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.black54,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _originalImage = null;
+                                _selectionStart = null;
+                                _selectionEnd = null;
+                                _activeSelectionType = null;
+                              });
+                            },
+                          ),
+                        ),
+                        if (_activeSelectionType != null)
+                          Positioned(
+                            bottom: 16,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.touch_app, color: _getSelectionColor(), size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Drag to select region',
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _activeSelectionType = null;
+                                          _selectionStart = null;
+                                          _selectionEnd = null;
+                                        });
+                                      },
+                                      child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
         ),
@@ -593,11 +660,37 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     Color color,
     TransformationType type,
   ) {
+    final isActive = _activeSelectionType == type;
     return ActionChip(
       avatar: Icon(icon, size: 18, color: color),
       label: Text(label),
-      onPressed: () => _addTransformation(type),
-      backgroundColor: color.withOpacity(0.1),
+      onPressed: () {
+        if (_originalImage == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please upload an image first'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+        
+        // For region-based transformations, activate selection mode
+        if (type == TransformationType.blurRegion ||
+            type == TransformationType.redactRegion ||
+            type == TransformationType.pixelateRegion) {
+          setState(() {
+            _activeSelectionType = isActive ? null : type;
+            _selectionStart = null;
+            _selectionEnd = null;
+          });
+        } else {
+          // For non-region transformations, add immediately
+          _addTransformation(type);
+        }
+      },
+      backgroundColor: isActive ? color.withOpacity(0.3) : color.withOpacity(0.1),
+      side: isActive ? BorderSide(color: color, width: 2) : null,
     );
   }
 
@@ -985,6 +1078,158 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       debugPrint('Could not download edited image: $e');
     }
   }
+
+  Color _getSelectionColor() {
+    switch (_activeSelectionType) {
+      case TransformationType.blurRegion:
+        return Colors.red;
+      case TransformationType.redactRegion:
+        return Colors.black;
+      case TransformationType.pixelateRegion:
+        return Colors.deepOrange;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  void _createTransformationFromSelection() {
+    if (_selectionStart == null || _selectionEnd == null || _activeSelectionType == null) {
+      return;
+    }
+
+    // Get the RenderBox of the image widget
+    final RenderBox? renderBox = _imageKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final imageSize = renderBox.size;
+    
+    // Calculate selection rectangle
+    final left = _selectionStart!.dx.clamp(0.0, imageSize.width);
+    final top = _selectionStart!.dy.clamp(0.0, imageSize.height);
+    final right = _selectionEnd!.dx.clamp(0.0, imageSize.width);
+    final bottom = _selectionEnd!.dy.clamp(0.0, imageSize.height);
+    
+    final x = left < right ? left : right;
+    final y = top < bottom ? top : bottom;
+    final width = (left - right).abs();
+    final height = (top - bottom).abs();
+
+    // Don't create if selection is too small
+    if (width < 10 || height < 10) {
+      setState(() {
+        _selectionStart = null;
+        _selectionEnd = null;
+        _activeSelectionType = null;
+      });
+      return;
+    }
+
+    // Decode image to get actual dimensions
+    final img.Image? decodedImage = img.decodeImage(_originalImage!);
+    if (decodedImage == null) return;
+
+    // Calculate scale factor
+    final scaleX = decodedImage.width / imageSize.width;
+    final scaleY = decodedImage.height / imageSize.height;
+
+    // Convert to actual image coordinates
+    final actualX = (x * scaleX).round();
+    final actualY = (y * scaleY).round();
+    final actualWidth = (width * scaleX).round();
+    final actualHeight = (height * scaleY).round();
+
+    // Create transformation with calculated parameters
+    Map<String, dynamic> params;
+    switch (_activeSelectionType!) {
+      case TransformationType.blurRegion:
+        params = {
+          'x': actualX,
+          'y': actualY,
+          'width': actualWidth,
+          'height': actualHeight,
+          'radius': 15
+        };
+        break;
+      case TransformationType.redactRegion:
+        params = {
+          'x': actualX,
+          'y': actualY,
+          'width': actualWidth,
+          'height': actualHeight
+        };
+        break;
+      case TransformationType.pixelateRegion:
+        params = {
+          'x': actualX,
+          'y': actualY,
+          'width': actualWidth,
+          'height': actualHeight,
+          'pixelSize': 20
+        };
+        break;
+      default:
+        return;
+    }
+
+    setState(() {
+      _transformations.add(
+        ImageTransformation(
+          type: _activeSelectionType!,
+          parameters: params,
+          appliedAt: DateTime.now(),
+          isReversible: true,
+        ),
+      );
+      _selectionStart = null;
+      _selectionEnd = null;
+      _activeSelectionType = null;
+    });
+  }
+}
+
+class _SelectionPainter extends CustomPainter {
+  final Offset start;
+  final Offset end;
+  final Color color;
+
+  _SelectionPainter({
+    required this.start,
+    required this.end,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromPoints(start, end);
+    
+    // Draw filled rectangle with transparency
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, fillPaint);
+    
+    // Draw border
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawRect(rect, borderPaint);
+    
+    // Draw corner handles
+    final handlePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final handleSize = 8.0;
+    
+    canvas.drawCircle(Offset(rect.left, rect.top), handleSize, handlePaint);
+    canvas.drawCircle(Offset(rect.right, rect.top), handleSize, handlePaint);
+    canvas.drawCircle(Offset(rect.left, rect.bottom), handleSize, handlePaint);
+    canvas.drawCircle(Offset(rect.right, rect.bottom), handleSize, handlePaint);
+  }
+
+  @override
+  bool shouldRepaint(_SelectionPainter oldDelegate) =>
+      start != oldDelegate.start || end != oldDelegate.end || color != oldDelegate.color;
 }
 
 class _EditTransformationDialog extends StatefulWidget {
