@@ -561,11 +561,22 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                   ),
                   title: Text(_getTransformationName(transform.type)),
                   subtitle: Text(_getTransformationDescription(transform)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      setState(() => _transformations.removeAt(index));
-                    },
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _editTransformation(index),
+                        tooltip: 'Edit parameters',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          setState(() => _transformations.removeAt(index));
+                        },
+                        tooltip: 'Delete',
+                      ),
+                    ],
                   ),
                 );
               }),
@@ -671,6 +682,28 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         });
       }
     }
+  }
+
+  void _editTransformation(int index) {
+    final transform = _transformations[index];
+    final params = Map<String, dynamic>.from(transform.parameters);
+    
+    showDialog(
+      context: context,
+      builder: (context) => _EditTransformationDialog(
+        transformation: transform,
+        onSave: (updatedParams) {
+          setState(() {
+            _transformations[index] = ImageTransformation(
+              type: transform.type,
+              parameters: updatedParams,
+              appliedAt: DateTime.now(),
+              isReversible: transform.isReversible,
+            );
+          });
+        },
+      ),
+    );
   }
 
   void _addTransformation(TransformationType type) {
@@ -950,6 +983,133 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     } catch (e) {
       // Log error but don't fail the proof download
       debugPrint('Could not download edited image: $e');
+    }
+  }
+}
+
+class _EditTransformationDialog extends StatefulWidget {
+  final ImageTransformation transformation;
+  final Function(Map<String, dynamic>) onSave;
+
+  const _EditTransformationDialog({
+    required this.transformation,
+    required this.onSave,
+  });
+
+  @override
+  State<_EditTransformationDialog> createState() => _EditTransformationDialogState();
+}
+
+class _EditTransformationDialogState extends State<_EditTransformationDialog> {
+  late Map<String, TextEditingController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = {};
+    
+    for (final entry in widget.transformation.parameters.entries) {
+      _controllers[entry.key] = TextEditingController(
+        text: entry.value.toString(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit ${_getTransformationName(widget.transformation.type)}'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _controllers.entries.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: TextField(
+                controller: entry.value,
+                decoration: InputDecoration(
+                  labelText: _formatParameterName(entry.key),
+                  border: const OutlineInputBorder(),
+                  helperText: _getParameterHelp(entry.key, widget.transformation.type),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final updatedParams = <String, dynamic>{};
+            for (final entry in _controllers.entries) {
+              final value = entry.value.text;
+              if (value.contains('.')) {
+                updatedParams[entry.key] = double.tryParse(value) ?? 0.0;
+              } else {
+                updatedParams[entry.key] = int.tryParse(value) ?? 0;
+              }
+            }
+            widget.onSave(updatedParams);
+            Navigator.pop(context);
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  String _getTransformationName(TransformationType type) {
+    return type.toString().split('.').last.replaceAllMapped(
+          RegExp(r'([A-Z])'),
+          (match) => ' ${match.group(0)}',
+        ).trim();
+  }
+
+  String _formatParameterName(String param) {
+    return param.replaceAllMapped(
+      RegExp(r'([A-Z])'),
+      (match) => ' ${match.group(0)}',
+    ).trim().split(' ').map((word) => 
+      word[0].toUpperCase() + word.substring(1)
+    ).join(' ');
+  }
+
+  String? _getParameterHelp(String param, TransformationType type) {
+    switch (param) {
+      case 'x':
+        return 'Horizontal position from left edge';
+      case 'y':
+        return 'Vertical position from top edge';
+      case 'width':
+        return 'Width in pixels';
+      case 'height':
+        return 'Height in pixels';
+      case 'radius':
+        return 'Blur intensity (higher = more blur)';
+      case 'pixelSize':
+        return 'Pixelation block size';
+      case 'angle':
+        return 'Rotation angle in degrees';
+      case 'hue':
+      case 'saturation':
+      case 'brightness':
+      case 'contrast':
+        return 'Value between 0.0 and 2.0';
+      default:
+        return null;
     }
   }
 }
