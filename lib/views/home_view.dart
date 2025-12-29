@@ -433,7 +433,7 @@ class _UseCaseCard extends StatelessWidget {
                 'Ex: $example',
                 style: TextStyle(
                   fontSize: 12,
-                  color: color.shade700,
+                  color: color,
                   fontStyle: FontStyle.italic,
                 ),
               ),
