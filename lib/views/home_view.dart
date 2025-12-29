@@ -23,6 +23,8 @@ class HomeView extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     _buildHowToSection(context),
                     const SizedBox(height: 32),
+                    _buildUseCasesSection(context),
+                    const SizedBox(height: 32),
                     _buildStatsCards(context),
                     const SizedBox(height: 32),
                     _buildQuickActions(context),

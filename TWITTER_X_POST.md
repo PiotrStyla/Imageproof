@@ -31,9 +31,13 @@ Thread 🧵👇
 ---
 
 **Tweet 2/7 (Problem):**
-The problem: How do journalists prove photos are real without exposing sources? How do researchers show data integrity without compromising IP?
+The dilemma is impossible:
 
-You need cryptographic proof, not blind trust.
+- Share evidence → Expose sources
+- Protect privacy → Lose credibility
+- Redact data → Can't prove authenticity
+
+Journalists, whistleblowers, and researchers face this daily.
 
 ---
 
@@ -70,13 +74,14 @@ Built with Flutter, Dart, Nova Folding Protocol.
 ---
 
 **Tweet 6/7 (Use Cases):**
-Perfect for:
-📰 Journalists (protect sources)
-🔬 Researchers (safeguard IP)
-⚖️ Legal evidence (chain of custody)
-🎨 Creators (combat deepfakes)
+Real-world examples:
 
-GDPR-compliant by design. Client-side only.
+📰 Leaked doc with source names blurred
+🚨 Whistleblower evidence with metadata redacted
+🔬 Research photos with participant faces pixelated
+⚖️ Legal discovery with PII masked
+
+All provably authentic. All privacy-preserving.
 
 ---
 
