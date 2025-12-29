@@ -70,25 +70,33 @@ class HomeView extends StatelessWidget {
             _buildQuickStep(
               context,
               '1',
-              'Generate Proof',
-              'Upload original + edited images, select transformations applied → Wait ~3 minutes → Download 2 files: proof.json + edited image',
-              Icons.add_photo_alternate,
+              'Upload Original Image',
+              'Click "Upload Original Image" → Select your photo/document (the one you want to redact)',
+              Icons.upload_file,
             ),
             const SizedBox(height: 12),
             _buildQuickStep(
               context,
               '2',
-              'Share Both Files',
-              'Send proof.json + edited_image.png to verifier (keep original private)',
-              Icons.share,
+              'Add Blur/Redact',
+              'Click 🔒 Blur Region, ⬛ Redact Region, or 🔲 Pixelate → Region starts at default position (adjustable in parameters)',
+              Icons.blur_on,
             ),
             const SizedBox(height: 12),
             _buildQuickStep(
               context,
               '3',
-              'Verify Authenticity',
-              'Upload proof.json → Verify transformations → Upload edited_image.png → Confirm hash match',
+              'Generate Proof',
+              'Click "Generate Proof" → Wait ~3 min → Download proof.json + processed image',
               Icons.verified_user,
+            ),
+            const SizedBox(height: 12),
+            _buildQuickStep(
+              context,
+              '4',
+              'Share & Verify',
+              'Send both files to anyone → They verify authenticity without seeing your original',
+              Icons.share,
             ),
             const SizedBox(height: 12),
             Container(
@@ -100,11 +108,11 @@ class HomeView extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  Icon(Icons.lightbulb_outline, color: Colors.blue.shade700, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Transformations prove the exact operations applied (crop, rotate, etc.), not just that the image was edited',
+                      '💡 Tip: After adding blur/redact, adjust region position by editing the transformation parameters (x, y, width, height). Interactive region selection coming soon!',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.blue.shade900,
