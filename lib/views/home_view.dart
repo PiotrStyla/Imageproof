@@ -335,6 +335,114 @@ class HomeView extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildUseCasesSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Privacy-Preserving Use Cases',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _UseCaseCard(
+                icon: Icons.article,
+                title: 'Journalism',
+                description: 'Prove document authenticity while protecting sources',
+                example: 'Leaked memo with redacted names',
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _UseCaseCard(
+                icon: Icons.warning_amber_rounded,
+                title: 'Whistleblowing',
+                description: 'Share evidence without revealing identity',
+                example: 'Internal emails with masked metadata',
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _UseCaseCard(
+                icon: Icons.gavel,
+                title: 'GDPR Compliance',
+                description: 'Publish research with privacy protection',
+                example: 'Study photos with blurred faces',
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _UseCaseCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final String example;
+  final Color color;
+
+  const _UseCaseCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.example,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'Ex: $example',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
