@@ -19,7 +19,6 @@ class GenerateProofView extends StatefulWidget {
 
 class _GenerateProofViewState extends State<GenerateProofView> {
   Uint8List? _originalImage;
-  Uint8List? _editedImage;
   final List<ImageTransformation> _transformations = [];
   bool _anonymousMode = true;
   String? _signerId;
@@ -53,7 +52,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildImageUploadSection(),
-                if (_originalImage != null && _editedImage != null) ...[
+                if (_originalImage != null) ...[
                   const SizedBox(height: 32),
                   _buildTransformationSection(),
                   const SizedBox(height: 32),
@@ -324,30 +323,18 @@ class _GenerateProofViewState extends State<GenerateProofView> {
             ],
           ),
         ),
-        Row(
-          children: [
-            Expanded(
-              child: _buildImageUploadCard(
-                title: 'Original Image',
-                subtitle: 'Upload unedited source',
-                image: _originalImage,
-                onUpload: () => _pickImage(isOriginal: true),
-                icon: Icons.photo_camera,
-                color: Colors.blue,
-              ),
+        Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: _buildImageUploadCard(
+              title: 'Original Image',
+              subtitle: 'Upload your unedited photo/document - the app will apply blur/redact for you',
+              image: _originalImage,
+              onUpload: () => _pickImage(isOriginal: true),
+              icon: Icons.upload_file,
+              color: Colors.blue,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildImageUploadCard(
-                title: 'Edited Image',
-                subtitle: 'Upload modified version',
-                image: _editedImage,
-                onUpload: () => _pickImage(isOriginal: false),
-                icon: Icons.edit,
-                color: Colors.purple,
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
@@ -432,11 +419,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                           ),
                           onPressed: () {
                             setState(() {
-                              if (title.contains('Original')) {
-                                _originalImage = null;
-                              } else {
-                                _editedImage = null;
-                              }
+                              _originalImage = null;
                             });
                           },
                         ),
@@ -729,8 +712,6 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       case TransformationType.contrast:
         params = {'contrast': 1.3};
         break;
-      default:
-        params = {};
     }
 
     setState(() {
@@ -773,17 +754,14 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         return 'Value: ${params['brightness']}';
       case TransformationType.contrast:
         return 'Value: ${params['contrast']}';
-      default:
-        return 'Custom transformation';
     }
   }
 
   Future<void> _generateProof(ImageProofViewModel viewModel) async {
-    if (_originalImage == null || _editedImage == null) return;
+    if (_originalImage == null) return;
 
-    final proof = await viewModel.generateProof(
+    final proof = await viewModel.generateProofWithTransformations(
       originalImage: _originalImage!,
-      editedImage: _editedImage!,
       transformations: _transformations,
       isAnonymous: _anonymousMode,
       signerId: _signerId,

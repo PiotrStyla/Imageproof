@@ -59,6 +59,44 @@ class ImageProofViewModel extends ChangeNotifier {
     }
   }
 
+  /// Generate proof by automatically applying transformations to original image
+  Future<ImageProof?> generateProofWithTransformations({
+    required Uint8List originalImage,
+    required List<ImageTransformation> transformations,
+    bool isAnonymous = true,
+    String? signerId,
+  }) async {
+    if (_isGenerating) return null;
+
+    _setGenerating(true);
+    _clearError();
+    _setProgress(0.0);
+
+    try {
+      // Apply transformations to create edited image
+      _setProgress(0.1);
+      final editedImage = await _imageProcessingService.processImage(
+        originalImage,
+        transformations,
+      );
+
+      _setProgress(0.3);
+
+      // Now generate proof with both images
+      return await generateProof(
+        originalImage: originalImage,
+        editedImage: editedImage,
+        transformations: transformations,
+        isAnonymous: isAnonymous,
+        signerId: signerId,
+      );
+    } catch (e) {
+      _setError('Failed to apply transformations: $e');
+      _setGenerating(false);
+      return null;
+    }
+  }
+
   /// Generate zero-knowledge proof for image transformation
   Future<ImageProof?> generateProof({
     required Uint8List originalImage,
