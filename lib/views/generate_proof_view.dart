@@ -653,11 +653,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
       if (result != null && result.files.single.bytes != null) {
         setState(() {
-          if (isOriginal) {
-            _originalImage = result.files.single.bytes;
-          } else {
-            _editedImage = result.files.single.bytes;
-          }
+          _originalImage = result.files.single.bytes;
         });
       }
     } catch (e) {
@@ -671,11 +667,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       if (image != null) {
         final bytes = await image.readAsBytes();
         setState(() {
-          if (isOriginal) {
-            _originalImage = bytes;
-          } else {
-            _editedImage = bytes;
-          }
+          _originalImage = bytes;
         });
       }
     }
