@@ -73,14 +73,17 @@ class ImageProofViewModel extends ChangeNotifier {
     _setProgress(0.0);
 
     try {
+      print('[ProofGen] Stage 1: Applying ${transformations.length} transformations...');
       // Apply transformations to create edited image
       _setProgress(0.1);
       final editedImage = await _imageProcessingService.processImage(
         originalImage,
         transformations,
       );
+      print('[ProofGen] Stage 1 complete - edited image created (${editedImage.length} bytes)');
 
       _setProgress(0.3);
+      print('[ProofGen] Stage 2: Starting zkSNARK generation...');
 
       // Now generate proof with both images
       return await generateProof(
@@ -91,6 +94,7 @@ class ImageProofViewModel extends ChangeNotifier {
         signerId: signerId,
       );
     } catch (e) {
+      print('[ProofGen] ERROR: $e');
       _setError('Failed to apply transformations: $e');
       _setGenerating(false);
       return null;

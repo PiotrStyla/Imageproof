@@ -31,18 +31,29 @@ class ImageProcessingService {
     Uint8List imageData,
     List<ImageTransformation> transformations,
   ) async {
+    print('[ImageProcessing] Starting processImage with ${transformations.length} transformations');
     var currentImage = img.decodeImage(imageData);
     if (currentImage == null) {
       throw Exception('Failed to decode image');
     }
+    print('[ImageProcessing] Image decoded: ${currentImage.width}x${currentImage.height}');
 
     // Apply transformations sequentially
-    for (final transformation in transformations) {
+    for (int i = 0; i < transformations.length; i++) {
+      final transformation = transformations[i];
+      print('[ImageProcessing] Applying transformation ${i + 1}/${transformations.length}: ${transformation.type}');
       currentImage = await _applyTransformation(currentImage!, transformation);
+      print('[ImageProcessing] Transformation ${i + 1} complete');
+      
+      // Yield to event loop after each transformation
+      await Future.delayed(Duration.zero);
     }
 
+    print('[ImageProcessing] Encoding final image');
     // Encode back to bytes with optimal compression
-    return Uint8List.fromList(img.encodeJpg(currentImage!, quality: 95));
+    final result = Uint8List.fromList(img.encodeJpg(currentImage!, quality: 95));
+    print('[ImageProcessing] processImage complete');
+    return result;
   }
 
   /// Apply single transformation with GPU acceleration where available
@@ -125,14 +136,21 @@ class ImageProcessingService {
     final height = params['height'] as int? ?? 100;
     final radius = params['radius'] as int? ?? 10;
 
+    print('[BlurRegion] Applying blur: region=${width}x${height}, radius=$radius');
+    
     // Extract region
     final region = img.copyCrop(image, x: x, y: y, width: width, height: height);
+    print('[BlurRegion] Region extracted, starting gaussianBlur...');
     
-    // Blur the region
+    // Blur the region - EXPENSIVE OPERATION
+    // For large regions or high radius, this can block for seconds
     final blurred = img.gaussianBlur(region, radius: radius);
+    print('[BlurRegion] Blur complete, compositing...');
     
     // Composite back onto original
-    return img.compositeImage(image, blurred, dstX: x, dstY: y);
+    final result = img.compositeImage(image, blurred, dstX: x, dstY: y);
+    print('[BlurRegion] Complete');
+    return result;
   }
 
   /// Redact region with black box (PRIVACY FEATURE)
