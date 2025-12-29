@@ -93,8 +93,13 @@ class CryptoService {
         case TransformationType.rotate:
           constraints.addAll(_createRotateConstraints(transform.parameters));
           break;
-        case TransformationType.colorAdjustment:
+        case TransformationType.colorAdjust:
           constraints.addAll(_createColorConstraints(transform.parameters));
+          break;
+        case TransformationType.blurRegion:
+        case TransformationType.redactRegion:
+        case TransformationType.pixelateRegion:
+          constraints.addAll(_createRegionConstraints(transform.parameters));
           break;
         default:
           constraints.addAll(_createGenericConstraints(transform.parameters));

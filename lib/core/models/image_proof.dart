@@ -164,19 +164,20 @@ class ImageTransformation {
 
 /// Types of image transformations
 enum TransformationType {
+  // Privacy-focused transformations (PRIMARY)
+  blurRegion,
+  redactRegion,
+  pixelateRegion,
+  
+  // Technical transformations
   crop,
   resize,
   rotate,
-  colorAdjustment,
-  filter,
-  blur,
-  sharpen,
-  overlay,
-  removeObject,
-  addText,
-  changeBrightness,
-  changeContrast,
-  changeSaturation,
+  
+  // Aesthetic transformations (SECONDARY)
+  colorAdjust,
+  brightness,
+  contrast,
 }
 
 /// Verification status of a proof

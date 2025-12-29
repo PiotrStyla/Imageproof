@@ -60,26 +60,23 @@ class ImageProcessingService {
       case TransformationType.rotate:
         return _applyRotate(image, transformation.parameters);
       
-      case TransformationType.colorAdjustment:
-        return _applyColorAdjustment(image, transformation.parameters);
+      case TransformationType.blurRegion:
+        return _applyBlurRegion(image, transformation.parameters);
       
-      case TransformationType.filter:
-        return _applyFilter(image, transformation.parameters);
+      case TransformationType.redactRegion:
+        return _applyRedactRegion(image, transformation.parameters);
       
-      case TransformationType.blur:
-        return _applyBlur(image, transformation.parameters);
+      case TransformationType.pixelateRegion:
+        return _applyPixelateRegion(image, transformation.parameters);
       
-      case TransformationType.sharpen:
-        return _applySharpen(image, transformation.parameters);
+      case TransformationType.colorAdjust:
+        return _applyColorAdjust(image, transformation.parameters);
       
-      case TransformationType.changeBrightness:
+      case TransformationType.brightness:
         return _applyBrightness(image, transformation.parameters);
       
-      case TransformationType.changeContrast:
+      case TransformationType.contrast:
         return _applyContrast(image, transformation.parameters);
-      
-      case TransformationType.changeSaturation:
-        return _applySaturation(image, transformation.parameters);
       
       default:
         return image;
@@ -120,8 +117,71 @@ class ImageProcessingService {
     return img.copyRotate(image, angle: angle.toDouble());
   }
 
+  /// Blur specific region (PRIVACY FEATURE)
+  img.Image _applyBlurRegion(img.Image image, Map<String, dynamic> params) {
+    final x = params['x'] as int? ?? 0;
+    final y = params['y'] as int? ?? 0;
+    final width = params['width'] as int? ?? 100;
+    final height = params['height'] as int? ?? 100;
+    final radius = params['radius'] as int? ?? 10;
+
+    // Extract region
+    final region = img.copyCrop(image, x: x, y: y, width: width, height: height);
+    
+    // Blur the region
+    final blurred = img.gaussianBlur(region, radius: radius);
+    
+    // Composite back onto original
+    return img.compositeImage(image, blurred, dstX: x, dstY: y);
+  }
+
+  /// Redact region with black box (PRIVACY FEATURE)
+  img.Image _applyRedactRegion(img.Image image, Map<String, dynamic> params) {
+    final x = params['x'] as int? ?? 0;
+    final y = params['y'] as int? ?? 0;
+    final width = params['width'] as int? ?? 100;
+    final height = params['height'] as int? ?? 100;
+
+    // Draw black rectangle over region
+    return img.fillRect(image,
+      x1: x,
+      y1: y,
+      x2: x + width,
+      y2: y + height,
+      color: img.ColorRgb8(0, 0, 0),
+    );
+  }
+
+  /// Pixelate region (PRIVACY FEATURE)
+  img.Image _applyPixelateRegion(img.Image image, Map<String, dynamic> params) {
+    final x = params['x'] as int? ?? 0;
+    final y = params['y'] as int? ?? 0;
+    final width = params['width'] as int? ?? 100;
+    final height = params['height'] as int? ?? 100;
+    final pixelSize = params['pixelSize'] as int? ?? 10;
+
+    // Extract region
+    final region = img.copyCrop(image, x: x, y: y, width: width, height: height);
+    
+    // Downscale then upscale for pixelation effect
+    final downscaled = img.copyResize(region,
+      width: (width / pixelSize).ceil(),
+      height: (height / pixelSize).ceil(),
+      interpolation: img.Interpolation.nearest,
+    );
+    
+    final pixelated = img.copyResize(downscaled,
+      width: width,
+      height: height,
+      interpolation: img.Interpolation.nearest,
+    );
+    
+    // Composite back
+    return img.compositeImage(image, pixelated, dstX: x, dstY: y);
+  }
+
   /// Advanced color adjustment with HSV manipulation
-  img.Image _applyColorAdjustment(img.Image image, Map<String, dynamic> params) {
+  img.Image _applyColorAdjust(img.Image image, Map<String, dynamic> params) {
     final hue = params['hue'] as num? ?? 0;
     final saturation = params['saturation'] as num? ?? 1.0;
     final value = params['value'] as num? ?? 1.0;
@@ -133,41 +193,6 @@ class ImageProcessingService {
     );
   }
 
-  /// Apply filter with custom kernels
-  img.Image _applyFilter(img.Image image, Map<String, dynamic> params) {
-    final filterType = params['type'] as String? ?? 'none';
-    
-    switch (filterType) {
-      case 'grayscale':
-        return img.grayscale(image);
-      case 'sepia':
-        return img.sepia(image);
-      case 'invert':
-        return img.invert(image);
-      default:
-        return image;
-    }
-  }
-
-  /// Gaussian blur with variable radius
-  img.Image _applyBlur(img.Image image, Map<String, dynamic> params) {
-    final radius = params['radius'] as int? ?? 3;
-    return img.gaussianBlur(image, radius: radius);
-  }
-
-  /// Sharpen using unsharp mask
-  img.Image _applySharpen(img.Image image, Map<String, dynamic> params) {
-    final amount = params['amount'] as num? ?? 1.0;
-    
-    // Create sharpening kernel as flat list
-    final kernel = <num>[
-      0.0, -1.0, 0.0,
-      -1.0, 5.0, -1.0,
-      0.0, -1.0, 0.0,
-    ];
-    
-    return img.convolution(image, filter: kernel, div: 1, offset: 0);
-  }
 
   /// Adjust brightness
   img.Image _applyBrightness(img.Image image, Map<String, dynamic> params) {
@@ -181,11 +206,6 @@ class ImageProcessingService {
     return img.adjustColor(image, contrast: contrast.toDouble());
   }
 
-  /// Adjust saturation
-  img.Image _applySaturation(img.Image image, Map<String, dynamic> params) {
-    final saturation = params['saturation'] as num? ?? 1.0;
-    return img.adjustColor(image, saturation: saturation.toDouble());
-  }
 
   /// Get interpolation method
   img.Interpolation _getInterpolation(String type) {

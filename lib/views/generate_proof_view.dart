@@ -506,6 +506,26 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               spacing: 12,
               runSpacing: 12,
               children: [
+                // PRIVACY-FOCUSED TRANSFORMATIONS (PRIORITY)
+                _buildTransformationChip(
+                  '🔒 Blur Region',
+                  Icons.blur_on,
+                  Colors.red,
+                  TransformationType.blurRegion,
+                ),
+                _buildTransformationChip(
+                  '⬛ Redact Region',
+                  Icons.block,
+                  Colors.black,
+                  TransformationType.redactRegion,
+                ),
+                _buildTransformationChip(
+                  '🔲 Pixelate Region',
+                  Icons.grid_on,
+                  Colors.deepOrange,
+                  TransformationType.pixelateRegion,
+                ),
+                // TECHNICAL TRANSFORMATIONS
                 _buildTransformationChip(
                   'Crop',
                   Icons.crop,
@@ -524,23 +544,24 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                   Colors.orange,
                   TransformationType.rotate,
                 ),
+                // AESTHETIC TRANSFORMATIONS
                 _buildTransformationChip(
                   'Color Adjust',
                   Icons.palette,
                   Colors.purple,
-                  TransformationType.colorAdjustment,
+                  TransformationType.colorAdjust,
                 ),
                 _buildTransformationChip(
                   'Brightness',
                   Icons.brightness_6,
                   Colors.yellow,
-                  TransformationType.changeBrightness,
+                  TransformationType.brightness,
                 ),
                 _buildTransformationChip(
                   'Contrast',
                   Icons.contrast,
                   Colors.pink,
-                  TransformationType.changeContrast,
+                  TransformationType.contrast,
                 ),
               ],
             ),
@@ -690,13 +711,22 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       case TransformationType.rotate:
         params = {'angle': 90};
         break;
-      case TransformationType.colorAdjustment:
+      case TransformationType.blurRegion:
+        params = {'x': 100, 'y': 100, 'width': 200, 'height': 200, 'radius': 15};
+        break;
+      case TransformationType.redactRegion:
+        params = {'x': 100, 'y': 100, 'width': 200, 'height': 200};
+        break;
+      case TransformationType.pixelateRegion:
+        params = {'x': 100, 'y': 100, 'width': 200, 'height': 200, 'pixelSize': 20};
+        break;
+      case TransformationType.colorAdjust:
         params = {'hue': 0.5, 'saturation': 1.2};
         break;
-      case TransformationType.changeBrightness:
+      case TransformationType.brightness:
         params = {'brightness': 0.2};
         break;
-      case TransformationType.changeContrast:
+      case TransformationType.contrast:
         params = {'contrast': 1.3};
         break;
       default:
@@ -731,11 +761,17 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         return 'Size: ${params['width']}x${params['height']}';
       case TransformationType.rotate:
         return 'Angle: ${params['angle']}°';
-      case TransformationType.colorAdjustment:
+      case TransformationType.blurRegion:
+        return 'Region: ${params['width']}x${params['height']}, Radius: ${params['radius']}';
+      case TransformationType.redactRegion:
+        return 'Region: ${params['width']}x${params['height']}';
+      case TransformationType.pixelateRegion:
+        return 'Region: ${params['width']}x${params['height']}, Pixel: ${params['pixelSize']}';
+      case TransformationType.colorAdjust:
         return 'Hue: ${params['hue']}, Sat: ${params['saturation']}';
-      case TransformationType.changeBrightness:
+      case TransformationType.brightness:
         return 'Value: ${params['brightness']}';
-      case TransformationType.changeContrast:
+      case TransformationType.contrast:
         return 'Value: ${params['contrast']}';
       default:
         return 'Custom transformation';
