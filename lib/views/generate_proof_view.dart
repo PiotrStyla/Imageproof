@@ -886,41 +886,52 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     );
 
     if (proof != null && mounted) {
-      // Download the proof file
+      // Automatically download both files immediately after generation
       _downloadProofFile(proof);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Proof Generated Successfully!',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('Size: ${(proof.proofSize / 1024).toStringAsFixed(2)} KB'),
-                  ],
+      // Small delay between downloads to avoid browser blocking
+      await Future.delayed(const Duration(milliseconds: 300));
+      _downloadOptimizedEditedImage(proof);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Proof Generated Successfully!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text('Size: ${(proof.proofSize / 1024).toStringAsFixed(2)} KB'),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Files downloaded to your Downloads folder',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'View',
+              textColor: Colors.white,
+              onPressed: () {
+                _showProofDetailsDialog(context, proof);
+              },
+            ),
           ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'View',
-            textColor: Colors.white,
-            onPressed: () {
-              _showProofDetailsDialog(context, proof);
-            },
-          ),
-        ),
-      );
+        );
+      }
     } else if (viewModel.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -965,7 +976,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '2 files downloaded:\n• Proof (.json) - Share with verifier\n• Edited image (.png) - Share for hash verification',
+                        '2 files ready to download:\n• Proof (.json) - Share with verifier\n• Edited image (.jpg) - Share for hash verification',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.blue.shade900,
@@ -982,6 +993,20 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              _downloadProofFile(proof);
+            },
+            icon: const Icon(Icons.description),
+            label: const Text('Proof'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              _downloadOptimizedEditedImage(proof);
+            },
+            icon: const Icon(Icons.image),
+            label: const Text('Image'),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -1029,27 +1054,56 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
   void _downloadProofFile(ImageProof proof) {
     try {
+      debugPrint('[Download] Starting proof download for ${proof.id}');
+      
       // Convert proof to JSON
       final jsonString = jsonEncode(proof.toJson());
+      debugPrint('[Download] JSON string length: ${jsonString.length}');
+      
       final bytes = utf8.encode(jsonString);
-      final blob = html.Blob([bytes], 'application/json');
+      debugPrint('[Download] UTF-8 bytes length: ${bytes.length}');
       
-      // Create download link
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
+      final base64Data = base64Encode(bytes);
+      debugPrint('[Download] Base64 length: ${base64Data.length}');
+      
+      // Use data URL instead of Blob (more reliable across browsers/proxies)
+      final dataUrl = 'data:application/json;base64,$base64Data';
+      debugPrint('[Download] Creating anchor element...');
+      
+      final anchor = html.AnchorElement(href: dataUrl)
         ..setAttribute('download', 'sealzero_proof_${proof.id.substring(0, 8)}.json')
-        ..click();
+        ..style.display = 'none';
       
-      html.Url.revokeObjectUrl(url);
+      debugPrint('[Download] Appending to document body...');
+      html.document.body?.append(anchor);
+      
+      debugPrint('[Download] Triggering click...');
+      anchor.click();
+      
+      debugPrint('[Download] Removing anchor...');
+      anchor.remove();
+      
+      debugPrint('[Download] Proof download complete!');
 
-      // Also download the optimized edited image for verification
-      _downloadOptimizedEditedImage(proof);
-    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Proof file downloaded!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('[Download] ERROR: $e');
+      debugPrint('[Download] Stack trace: $stackTrace');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error downloading proof: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -1060,22 +1114,62 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     try {
       final viewModel = Provider.of<ImageProofViewModel>(context, listen: false);
       final editedImage = viewModel.lastOptimizedEditedImage;
+      final format = viewModel.lastOptimizedEditedImageFormat;
       
       if (editedImage != null && editedImage.isNotEmpty) {
-        // Download the optimized edited image
-        final blob = html.Blob([editedImage], 'image/png');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute('download', 'edited_image_${proof.id.substring(0, 8)}.png')
-          ..click();
-        
-        html.Url.revokeObjectUrl(url);
+        final mimeType = switch (format) {
+          'jpeg' => 'image/jpeg',
+          'png' => 'image/png',
+          'webp' => 'image/webp',
+          _ => 'application/octet-stream',
+        };
+
+        final extension = switch (format) {
+          'jpeg' => 'jpg',
+          'png' => 'png',
+          'webp' => 'webp',
+          _ => 'bin',
+        };
+
+        // Use data URL instead of Blob (more reliable across browsers/proxies)
+        final base64Data = base64Encode(editedImage);
+        final dataUrl = 'data:$mimeType;base64,$base64Data';
+        final anchor = html.AnchorElement(href: dataUrl)
+          ..setAttribute('download', 'edited_image_${proof.id.substring(0, 8)}.$extension')
+          ..style.display = 'none';
+        html.document.body?.append(anchor);
+        anchor.click();
+        anchor.remove();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image file downloaded!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       } else {
-        debugPrint('No edited image available for download');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No edited image available'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
-      // Log error but don't fail the proof download
       debugPrint('Could not download edited image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

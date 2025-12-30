@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:uuid/uuid.dart';
 import '../models/image_proof.dart';
 import '../crypto/crypto_service.dart';
@@ -176,13 +177,11 @@ class ImageProofService {
 
   /// Get platform information
   String _getPlatform() {
-    // Platform detection logic
-    if (String.fromEnvironment('FLUTTER_TEST') == 'true') {
-      return 'test';
+    // Runtime platform detection
+    if (kIsWeb) {
+      return 'web';
     }
-    
-    // This would be implemented with platform-specific detection
-    return 'unknown';
+    return 'mobile';
   }
 
   /// Get app version
