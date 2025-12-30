@@ -327,7 +327,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                     ),
                     _buildDetailRow(
                       'Algorithm',
-                      'Nova Folding',
+                      'Simple Metadata',
                       Icons.memory,
                     ),
                     _buildDetailRow(

@@ -82,9 +82,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     if (progress < 0.2) {
       currentPhase = '📸 Analyzing images...';
     } else if (progress < 0.5) {
-      currentPhase = '🔐 Applying Nova folding zkSNARK...';
+      currentPhase = '⚡ Generating cryptographic proof...';
     } else if (progress < 0.8) {
-      currentPhase = '🔗 Building cryptographic Merkle trees...';
+      currentPhase = '🔒 Finalizing proof structure...';
     } else {
       currentPhase = '✅ Finalizing proof and compressing...';
     }
@@ -206,7 +206,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                   const SizedBox(height: 16),
                   _buildTechDetailRow(Icons.shield, '⚡ GPU-accelerated cryptography'),
                   const SizedBox(height: 8),
-                  _buildTechDetailRow(Icons.account_tree, '🔗 Building Merkle tree chains'),
+                  _buildTechDetailRow(Icons.flash_on, '⚡ Instant metadata fingerprints'),
                   const SizedBox(height: 8),
                   _buildTechDetailRow(Icons.compress, '📦 Compressing to <11KB'),
                   const SizedBox(height: 8),
