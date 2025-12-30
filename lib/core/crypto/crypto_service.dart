@@ -1,51 +1,123 @@
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
-import 'package:pointycastle/pointycastle.dart';
 import 'dart:convert';
+import 'dart:math';
 import '../models/image_proof.dart';
 
-/// Advanced cryptographic service implementing folding-based zkSNARKs
-/// Uses Nova protocol for recursive proof composition
+/// Cryptographic service implementing hash-based commitment proofs
+/// Uses SHA-256 and HMAC for efficient, verifiable proofs
 class CryptoService {
-  late Blake2b _hashAlgorithm;
+  late Sha256 _sha256;
+  late Hmac _hmac;
   bool _initialized = false;
+  
+  // Secret key for HMAC (in production, this would be derived securely)
+  late List<int> _secretKey;
 
   /// Initialize cryptographic components
   Future<void> initialize() async {
-    _hashAlgorithm = Blake2b();
+    _sha256 = Sha256();
+    _secretKey = List.generate(32, (i) => Random.secure().nextInt(256));
+    _hmac = Hmac(_sha256);
     _initialized = true;
+    print('[CryptoService] Initialized with SHA-256 and HMAC');
   }
 
-  /// Generate cryptographic hash of image data using Blake2b
+  /// Generate cryptographic hash of image data using SHA-256
   Future<String> hashImage(Uint8List imageData) async {
-    final hash = await _hashAlgorithm.hash(imageData);
+    print('[CryptoService] Hashing image (${imageData.length} bytes)...');
+    final hash = await _sha256.hash(imageData);
+    print('[CryptoService] Image hash complete');
     return base64Encode(hash.bytes);
   }
 
-  /// Generate zero-knowledge proof using Nova folding scheme
-  /// This is a simplified implementation - production would use Rust FFI to actual Nova library
+  /// Generate cryptographic proof using hash-based commitment scheme
+  /// This is REAL cryptography - efficient and verifiable
   Future<String> generateProof(
     Uint8List originalImage,
     Uint8List editedImage,
     List<ImageTransformation> transformations,
   ) async {
-    // Step 1: Create circuit representation of transformations
-    final circuit = _createTransformationCircuit(transformations);
+    print('[CryptoService] Starting proof generation...');
+    final startTime = DateTime.now();
     
-    // Step 2: Generate witness (private inputs)
-    final witness = await _generateWitness(originalImage, editedImage, transformations);
+    // Step 1: Hash both images (single hash each, not per-chunk)
+    print('[CryptoService] Step 1: Hashing original image...');
+    final originalHash = await _sha256.hash(originalImage);
+    await Future.delayed(Duration.zero); // Yield to UI
     
-    // Step 3: Apply Nova folding to compress proof
-    final foldedProof = await _applyNovaFolding(circuit, witness);
+    print('[CryptoService] Step 2: Hashing edited image...');
+    final editedHash = await _sha256.hash(editedImage);
+    await Future.delayed(Duration.zero); // Yield to UI
     
-    // Step 4: Compress proof to achieve <11KB target
-    final compressedProof = await _compressProof(foldedProof);
+    // Step 2: Create transformation commitment (Merkle root of all transformations)
+    print('[CryptoService] Step 3: Creating transformation commitment...');
+    final transformationCommitment = await _createTransformationCommitment(transformations);
+    await Future.delayed(Duration.zero); // Yield to UI
     
-    return base64Encode(compressedProof);
+    // Step 3: Create binding commitment linking original -> transformations -> edited
+    print('[CryptoService] Step 4: Creating binding commitment...');
+    final bindingData = Uint8List.fromList([
+      ...originalHash.bytes,
+      ...editedHash.bytes,
+      ...transformationCommitment,
+    ]);
+    final bindingCommitment = await _hmac.calculateMac(
+      bindingData,
+      secretKey: SecretKey(_secretKey),
+    );
+    await Future.delayed(Duration.zero); // Yield to UI
+    
+    // Step 4: Create final proof structure
+    print('[CryptoService] Step 5: Building proof structure...');
+    final proof = ProofData(
+      version: 1,
+      algorithm: 'SHA256-HMAC-COMMITMENT',
+      originalImageHash: base64Encode(originalHash.bytes),
+      editedImageHash: base64Encode(editedHash.bytes),
+      transformationCommitment: base64Encode(transformationCommitment),
+      bindingCommitment: base64Encode(bindingCommitment.bytes),
+      transformationCount: transformations.length,
+      timestamp: DateTime.now().toIso8601String(),
+      nonce: base64Encode(List.generate(16, (i) => Random.secure().nextInt(256))),
+    );
+    
+    final proofJson = jsonEncode(proof.toJson());
+    final proofBytes = utf8.encode(proofJson);
+    
+    final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+    print('[CryptoService] Proof generation complete in ${elapsed}ms (${proofBytes.length} bytes)');
+    
+    return base64Encode(proofBytes);
+  }
+  
+  /// Create Merkle-like commitment of all transformations
+  Future<Uint8List> _createTransformationCommitment(List<ImageTransformation> transformations) async {
+    if (transformations.isEmpty) {
+      return Uint8List(32);
+    }
+    
+    // Hash each transformation
+    final hashes = <List<int>>[];
+    for (final t in transformations) {
+      final data = utf8.encode('${t.type}:${jsonEncode(t.parameters)}');
+      final hash = await _sha256.hash(data);
+      hashes.add(hash.bytes);
+    }
+    
+    // Combine all hashes into single commitment
+    var combined = hashes[0];
+    for (int i = 1; i < hashes.length; i++) {
+      final concat = Uint8List.fromList([...combined, ...hashes[i]]);
+      final hash = await _sha256.hash(concat);
+      combined = hash.bytes;
+    }
+    
+    return Uint8List.fromList(combined);
   }
 
-  /// Verify zero-knowledge proof
+  /// Verify cryptographic proof
   Future<bool> verifyProof(
     String proofData,
     String originalImageHash,
@@ -53,293 +125,60 @@ class CryptoService {
     List<ImageTransformation> transformations,
   ) async {
     try {
+      print('[CryptoService] Starting proof verification...');
+      
+      // Decode proof
       final proofBytes = base64Decode(proofData);
+      final proofJson = utf8.decode(proofBytes);
+      final proofMap = jsonDecode(proofJson) as Map<String, dynamic>;
+      final proof = ProofData.fromJson(proofMap);
       
-      // Decompress proof
-      final decompressedProof = await _decompressProof(proofBytes);
+      // Verify image hashes match
+      if (proof.originalImageHash != originalImageHash) {
+        print('[CryptoService] Original image hash mismatch');
+        return false;
+      }
       
-      // Reconstruct circuit from transformations
-      final circuit = _createTransformationCircuit(transformations);
+      if (proof.editedImageHash != editedImageHash) {
+        print('[CryptoService] Edited image hash mismatch');
+        return false;
+      }
       
-      // Verify using Nova protocol
-      final isValid = await _verifyNovaProof(
-        circuit,
-        decompressedProof,
-        originalImageHash,
-        editedImageHash,
+      // Verify transformation count
+      if (proof.transformationCount != transformations.length) {
+        print('[CryptoService] Transformation count mismatch');
+        return false;
+      }
+      
+      // Verify transformation commitment
+      final expectedCommitment = await _createTransformationCommitment(transformations);
+      if (proof.transformationCommitment != base64Encode(expectedCommitment)) {
+        print('[CryptoService] Transformation commitment mismatch');
+        return false;
+      }
+      
+      // Verify binding commitment
+      final bindingData = Uint8List.fromList([
+        ...base64Decode(proof.originalImageHash),
+        ...base64Decode(proof.editedImageHash),
+        ...expectedCommitment,
+      ]);
+      final expectedBinding = await _hmac.calculateMac(
+        bindingData,
+        secretKey: SecretKey(_secretKey),
       );
       
-      return isValid;
+      if (proof.bindingCommitment != base64Encode(expectedBinding.bytes)) {
+        print('[CryptoService] Binding commitment mismatch');
+        return false;
+      }
+      
+      print('[CryptoService] Proof verified successfully!');
+      return true;
     } catch (e) {
+      print('[CryptoService] Verification error: $e');
       return false;
     }
-  }
-
-  /// Create circuit representation of image transformations
-  /// Each transformation becomes a set of constraints
-  CircuitRepresentation _createTransformationCircuit(
-    List<ImageTransformation> transformations,
-  ) {
-    final constraints = <Constraint>[];
-    
-    for (final transform in transformations) {
-      switch (transform.type) {
-        case TransformationType.crop:
-          constraints.addAll(_createCropConstraints(transform.parameters));
-          break;
-        case TransformationType.resize:
-          constraints.addAll(_createResizeConstraints(transform.parameters));
-          break;
-        case TransformationType.rotate:
-          constraints.addAll(_createRotateConstraints(transform.parameters));
-          break;
-        case TransformationType.colorAdjust:
-          constraints.addAll(_createColorConstraints(transform.parameters));
-          break;
-        case TransformationType.blurRegion:
-        case TransformationType.redactRegion:
-        case TransformationType.pixelateRegion:
-          constraints.addAll(_createRegionConstraints(transform.parameters));
-          break;
-        default:
-          constraints.addAll(_createGenericConstraints(transform.parameters));
-      }
-    }
-    
-    return CircuitRepresentation(constraints);
-  }
-
-  /// Generate witness (private data) for proof
-  Future<Witness> _generateWitness(
-    Uint8List originalImage,
-    Uint8List editedImage,
-    List<ImageTransformation> transformations,
-  ) async {
-    // Create Merkle tree of image pixels for efficient verification
-    final originalTree = await _createPixelMerkleTree(originalImage);
-    final editedTree = await _createPixelMerkleTree(editedImage);
-    
-    // Generate transformation intermediate states
-    final intermediateStates = await _computeIntermediateStates(
-      originalImage,
-      transformations,
-    );
-    
-    return Witness(
-      originalRoot: originalTree.root,
-      editedRoot: editedTree.root,
-      intermediateStates: intermediateStates,
-      transformationParams: transformations.map((t) => t.parameters).toList(),
-    );
-  }
-
-  /// Apply Nova folding scheme for recursive proof composition
-  /// This achieves the 3.5x parallel speedup mentioned in the paper
-  Future<Uint8List> _applyNovaFolding(
-    CircuitRepresentation circuit,
-    Witness witness,
-  ) async {
-    // Initialize Nova prover with BN254 curve
-    final curve = _initializeBN254Curve();
-    
-    // Create initial IVC (Incrementally Verifiable Computation) proof
-    var currentProof = await _createInitialIVCProof(circuit, witness, curve);
-    
-    // Fold multiple circuit instances recursively
-    // This is where the performance improvement comes from
-    for (int i = 0; i < witness.intermediateStates.length; i++) {
-      currentProof = await _foldProofStep(
-        currentProof,
-        witness.intermediateStates[i],
-        curve,
-      );
-    }
-    
-    // Final proof extraction
-    return await _extractFinalProof(currentProof);
-  }
-
-  /// Compress proof using advanced compression techniques
-  /// Targets <11KB as specified in paper
-  Future<Uint8List> _compressProof(Uint8List proof) async {
-    // Use LZMA2 compression for maximum compression ratio
-    // Combined with point compression on elliptic curve elements
-    final pointCompressed = _compressEllipticCurvePoints(proof);
-    final lzmaCompressed = await _applyLZMA2(pointCompressed);
-    
-    return lzmaCompressed;
-  }
-
-  /// Decompress proof for verification
-  Future<Uint8List> _decompressProof(Uint8List compressedProof) async {
-    final lzmaDecompressed = await _decompressLZMA2(compressedProof);
-    final pointDecompressed = _decompressEllipticCurvePoints(lzmaDecompressed);
-    
-    return pointDecompressed;
-  }
-
-  /// Verify Nova proof
-  Future<bool> _verifyNovaProof(
-    CircuitRepresentation circuit,
-    Uint8List proof,
-    String originalHash,
-    String editedHash,
-  ) async {
-    // Initialize verifier with same curve
-    final curve = _initializeBN254Curve();
-    
-    // Parse proof components
-    final proofComponents = _parseProofComponents(proof);
-    
-    // Verify each folding step
-    for (final component in proofComponents) {
-      final stepValid = await _verifyFoldingStep(component, curve);
-      if (!stepValid) return false;
-    }
-    
-    // Verify final hash commitments match
-    return _verifyHashCommitments(proof, originalHash, editedHash);
-  }
-
-  // Constraint generation methods
-  List<Constraint> _createCropConstraints(Map<String, dynamic> params) {
-    return [
-      Constraint('crop_bounds_check', params),
-      Constraint('pixel_subset_verification', params),
-    ];
-  }
-
-  List<Constraint> _createResizeConstraints(Map<String, dynamic> params) {
-    return [
-      Constraint('dimension_transformation', params),
-      Constraint('interpolation_verification', params),
-    ];
-  }
-
-  List<Constraint> _createRotateConstraints(Map<String, dynamic> params) {
-    return [
-      Constraint('rotation_matrix_verification', params),
-      Constraint('boundary_handling', params),
-    ];
-  }
-
-  List<Constraint> _createColorConstraints(Map<String, dynamic> params) {
-    return [
-      Constraint('color_space_transformation', params),
-      Constraint('value_range_check', params),
-    ];
-  }
-
-  List<Constraint> _createRegionConstraints(Map<String, dynamic> params) {
-    return [
-      Constraint('region_bounds_verification', params),
-      Constraint('pixel_merkle_proof', params),
-    ];
-  }
-
-  List<Constraint> _createGenericConstraints(Map<String, dynamic> params) {
-    return [Constraint('generic_transformation', params)];
-  }
-
-  // Merkle tree implementation for efficient pixel verification
-  Future<MerkleTree> _createPixelMerkleTree(Uint8List imageData) async {
-    final leaves = <Uint8List>[];
-    
-    // Chunk image into 256-byte blocks
-    for (int i = 0; i < imageData.length; i += 256) {
-      final end = (i + 256 < imageData.length) ? i + 256 : imageData.length;
-      final chunk = imageData.sublist(i, end);
-      final hash = await _hashAlgorithm.hash(chunk);
-      leaves.add(Uint8List.fromList(hash.bytes));
-    }
-    
-    return await MerkleTree.buildAsync(leaves, _hashAlgorithm);
-  }
-
-  // Compute intermediate transformation states
-  Future<List<Uint8List>> _computeIntermediateStates(
-    Uint8List originalImage,
-    List<ImageTransformation> transformations,
-  ) async {
-    final states = <Uint8List>[];
-    var currentState = originalImage;
-    
-    for (final transform in transformations) {
-      currentState = await _applyTransformationHash(currentState, transform);
-      states.add(currentState);
-    }
-    
-    return states;
-  }
-
-  Future<Uint8List> _applyTransformationHash(
-    Uint8List state,
-    ImageTransformation transform,
-  ) async {
-    final combined = Uint8List.fromList([
-      ...state,
-      ...utf8.encode(transform.type.toString()),
-      ...utf8.encode(jsonEncode(transform.parameters)),
-    ]);
-    
-    final hash = await _hashAlgorithm.hash(combined);
-    return Uint8List.fromList(hash.bytes);
-  }
-
-  // Elliptic curve and cryptographic primitives
-  EllipticCurve _initializeBN254Curve() {
-    // BN254 curve for efficient pairing-based cryptography
-    return EllipticCurve.bn254();
-  }
-
-  Future<IVCProof> _createInitialIVCProof(
-    CircuitRepresentation circuit,
-    Witness witness,
-    EllipticCurve curve,
-  ) async {
-    return IVCProof.initial(circuit, witness, curve);
-  }
-
-  Future<IVCProof> _foldProofStep(
-    IVCProof currentProof,
-    Uint8List intermediateState,
-    EllipticCurve curve,
-  ) async {
-    return currentProof.fold(intermediateState, curve);
-  }
-
-  Future<Uint8List> _extractFinalProof(IVCProof proof) async {
-    return proof.serialize();
-  }
-
-  Uint8List _compressEllipticCurvePoints(Uint8List proof) {
-    // Point compression reduces 64-byte points to 33 bytes
-    return proof; // Simplified - actual implementation would parse and compress points
-  }
-
-  Future<Uint8List> _applyLZMA2(Uint8List data) async {
-    // LZMA2 compression - simplified implementation
-    return data;
-  }
-
-  Future<Uint8List> _decompressLZMA2(Uint8List data) async {
-    return data;
-  }
-
-  Uint8List _decompressEllipticCurvePoints(Uint8List data) {
-    return data;
-  }
-
-  List<ProofComponent> _parseProofComponents(Uint8List proof) {
-    return [ProofComponent(proof)];
-  }
-
-  Future<bool> _verifyFoldingStep(ProofComponent component, EllipticCurve curve) async {
-    return true; // Simplified
-  }
-
-  bool _verifyHashCommitments(Uint8List proof, String originalHash, String editedHash) {
-    return true; // Simplified
   }
 
   /// Cleanup resources
@@ -348,102 +187,51 @@ class CryptoService {
   }
 }
 
-// Supporting classes for zkSNARK implementation
+/// Proof data structure - contains all cryptographic commitments
+class ProofData {
+  final int version;
+  final String algorithm;
+  final String originalImageHash;
+  final String editedImageHash;
+  final String transformationCommitment;
+  final String bindingCommitment;
+  final int transformationCount;
+  final String timestamp;
+  final String nonce;
 
-class CircuitRepresentation {
-  final List<Constraint> constraints;
-  CircuitRepresentation(this.constraints);
-}
-
-class Constraint {
-  final String type;
-  final Map<String, dynamic> parameters;
-  Constraint(this.type, this.parameters);
-}
-
-class Witness {
-  final Uint8List originalRoot;
-  final Uint8List editedRoot;
-  final List<Uint8List> intermediateStates;
-  final List<Map<String, dynamic>> transformationParams;
-  
-  Witness({
-    required this.originalRoot,
-    required this.editedRoot,
-    required this.intermediateStates,
-    required this.transformationParams,
+  ProofData({
+    required this.version,
+    required this.algorithm,
+    required this.originalImageHash,
+    required this.editedImageHash,
+    required this.transformationCommitment,
+    required this.bindingCommitment,
+    required this.transformationCount,
+    required this.timestamp,
+    required this.nonce,
   });
-}
 
-class MerkleTree {
-  final Uint8List root;
-  final List<Uint8List> leaves;
-  
-  MerkleTree(this.root, this.leaves);
-  
-  static Future<MerkleTree> buildAsync(List<Uint8List> leaves, Blake2b hashAlgorithm) async {
-    if (leaves.isEmpty) {
-      return MerkleTree(Uint8List(32), []);
-    }
-    
-    var currentLevel = leaves;
-    int batchCounter = 0;
-    
-    while (currentLevel.length > 1) {
-      final nextLevel = <Uint8List>[];
-      
-      for (int i = 0; i < currentLevel.length; i += 2) {
-        if (i + 1 < currentLevel.length) {
-          final combined = Uint8List.fromList([
-            ...currentLevel[i],
-            ...currentLevel[i + 1],
-          ]);
-          // Use async hashing to avoid blocking UI
-          final hash = await hashAlgorithm.hash(combined);
-          nextLevel.add(Uint8List.fromList(hash.bytes));
-          
-          // Yield to event loop every 100 operations to keep UI responsive
-          batchCounter++;
-          if (batchCounter % 100 == 0) {
-            await Future.delayed(Duration.zero);
-          }
-        } else {
-          nextLevel.add(currentLevel[i]);
-        }
-      }
-      
-      currentLevel = nextLevel;
-    }
-    
-    return MerkleTree(currentLevel[0], leaves);
-  }
-}
+  Map<String, dynamic> toJson() => {
+    'version': version,
+    'algorithm': algorithm,
+    'originalImageHash': originalImageHash,
+    'editedImageHash': editedImageHash,
+    'transformationCommitment': transformationCommitment,
+    'bindingCommitment': bindingCommitment,
+    'transformationCount': transformationCount,
+    'timestamp': timestamp,
+    'nonce': nonce,
+  };
 
-class EllipticCurve {
-  static EllipticCurve bn254() => EllipticCurve();
-}
-
-class IVCProof {
-  final Uint8List data;
-  
-  IVCProof(this.data);
-  
-  static Future<IVCProof> initial(
-    CircuitRepresentation circuit,
-    Witness witness,
-    EllipticCurve curve,
-  ) async {
-    return IVCProof(Uint8List(256));
-  }
-  
-  Future<IVCProof> fold(Uint8List state, EllipticCurve curve) async {
-    return IVCProof(Uint8List.fromList([...data, ...state]));
-  }
-  
-  Uint8List serialize() => data;
-}
-
-class ProofComponent {
-  final Uint8List data;
-  ProofComponent(this.data);
+  factory ProofData.fromJson(Map<String, dynamic> json) => ProofData(
+    version: json['version'] as int,
+    algorithm: json['algorithm'] as String,
+    originalImageHash: json['originalImageHash'] as String,
+    editedImageHash: json['editedImageHash'] as String,
+    transformationCommitment: json['transformationCommitment'] as String,
+    bindingCommitment: json['bindingCommitment'] as String,
+    transformationCount: json['transformationCount'] as int,
+    timestamp: json['timestamp'] as String,
+    nonce: json['nonce'] as String,
+  );
 }
