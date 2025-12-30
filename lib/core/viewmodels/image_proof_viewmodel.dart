@@ -83,19 +83,22 @@ class ImageProofViewModel extends ChangeNotifier {
       print('[ProofGen] Stage 1 complete - edited image created (${editedImage.length} bytes)');
 
       _setProgress(0.3);
-      print('[ProofGen] Stage 2: Starting zkSNARK generation...');
+      print('[ProofGen] Stage 2: Generating proof...');
 
-      // Now generate proof with both images
-      return await generateProof(
+      final proof = await _generateProofStage2(
         originalImage: originalImage,
         editedImage: editedImage,
         transformations: transformations,
         isAnonymous: isAnonymous,
         signerId: signerId,
+        baseProgress: 0.3,
       );
+
+      _setGenerating(false);
+      return proof;
     } catch (e) {
       print('[ProofGen] ERROR: $e');
-      _setError('Failed to apply transformations: $e');
+      _setError('Failed to generate proof: $e');
       _setGenerating(false);
       return null;
     }
@@ -116,52 +119,80 @@ class ImageProofViewModel extends ChangeNotifier {
     _setProgress(0.0);
 
     try {
-      // Validate images
-      _setProgress(0.1);
-      final isOriginalValid = _imageProcessingService.validateImageSize(originalImage);
-      final isEditedValid = _imageProcessingService.validateImageSize(editedImage);
-
-      if (!isOriginalValid || !isEditedValid) {
-        throw Exception('Image size exceeds maximum allowed (100MB or 8K resolution)');
-      }
-
-      _setProgress(0.2);
-
-      // Optimize images for proof generation
-      final optimizedOriginal = await _imageProcessingService.optimizeForProofGeneration(originalImage);
-      final optimizedEdited = await _imageProcessingService.optimizeForProofGeneration(editedImage);
-
-      _setProgress(0.4);
-
-      // Store optimized edited image for download
-      _lastOptimizedEditedImage = optimizedEdited;
-
-      // Generate proof
-      final proof = await _proofService.generateProof(
-        originalImageData: optimizedOriginal,
-        editedImageData: optimizedEdited,
+      final proof = await _generateProofStage2(
+        originalImage: originalImage,
+        editedImage: editedImage,
         transformations: transformations,
-        isAnonymousSigner: isAnonymous,
+        isAnonymous: isAnonymous,
         signerId: signerId,
+        baseProgress: 0.0,
       );
 
-      _setProgress(0.9);
-
-      // Update local state
-      _proofs.insert(0, proof);
-      _currentProof = proof;
-      
-      await _loadStatistics();
-
-      _setProgress(1.0);
       _setGenerating(false);
-
       return proof;
     } catch (e) {
       _setError('Failed to generate proof: $e');
       _setGenerating(false);
       return null;
     }
+  }
+
+  Future<ImageProof> _generateProofStage2({
+    required Uint8List originalImage,
+    required Uint8List editedImage,
+    required List<ImageTransformation> transformations,
+    required bool isAnonymous,
+    required String? signerId,
+    required double baseProgress,
+  }) async {
+    double mapProgress(double stageProgress) {
+      final start = baseProgress;
+      final end = 1.0;
+      return start + (end - start) * stageProgress;
+    }
+
+    // Validate images
+    _setProgress(mapProgress(0.1));
+    final isOriginalValid = _imageProcessingService.validateImageSize(originalImage);
+    final isEditedValid = _imageProcessingService.validateImageSize(editedImage);
+
+    if (!isOriginalValid || !isEditedValid) {
+      throw Exception('Image size exceeds maximum allowed (100MB or 8K resolution)');
+    }
+
+    _setProgress(mapProgress(0.2));
+
+    // Optimize images for proof generation
+    final optimizedOriginal =
+        await _imageProcessingService.optimizeForProofGeneration(originalImage);
+    final optimizedEdited =
+        await _imageProcessingService.optimizeForProofGeneration(editedImage);
+
+    _setProgress(mapProgress(0.4));
+
+    // Store optimized edited image for download
+    _lastOptimizedEditedImage = optimizedEdited;
+
+    // Generate proof
+    final proof = await _proofService.generateProof(
+      originalImageData: optimizedOriginal,
+      editedImageData: optimizedEdited,
+      transformations: transformations,
+      isAnonymousSigner: isAnonymous,
+      signerId: signerId,
+    );
+
+    _setProgress(mapProgress(0.9));
+
+    // Update local state
+    _proofs.insert(0, proof);
+    _currentProof = proof;
+
+    await _loadStatistics();
+
+    _setProgress(mapProgress(1.0));
+
+    return proof;
   }
 
   /// Verify an existing proof

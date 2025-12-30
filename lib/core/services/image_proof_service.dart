@@ -48,7 +48,7 @@ class ImageProofService {
       resolution: resolution,
       platform: _getPlatform(),
       appVersion: await _getAppVersion(),
-      algorithm: ProofAlgorithm.novaFolding,
+      algorithm: ProofAlgorithm.customVIMz,
     );
 
     // Create the proof object
