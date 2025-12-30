@@ -7,10 +7,6 @@ import 'package:vimz_private_proofs/core/services/image_proof_service.dart';
 import 'package:vimz_private_proofs/core/viewmodels/image_proof_viewmodel.dart';
 import 'package:vimz_private_proofs/core/image_processing/image_processing_service.dart';
 
-class MockImageProofService extends Mock implements ImageProofService {}
-
-class MockImageProcessingService extends Mock implements ImageProcessingService {}
-
 void main() {
   test(
       'generateProofWithTransformations should not deadlock when it calls stage 2 generation',
@@ -48,12 +44,14 @@ void main() {
       ),
     ];
 
-    when(imageProcessingService.processImage(any, any))
+    when(imageProcessingService.processImage(original, transformations))
         .thenAnswer((_) async => edited);
-    when(imageProcessingService.validateImageSize(any)).thenReturn(true);
-    when(imageProcessingService.optimizeForProofGeneration(any)).thenAnswer(
-      (invocation) async => invocation.positionalArguments.first as Uint8List,
-    );
+    when(imageProcessingService.validateImageSize(original)).thenReturn(true);
+    when(imageProcessingService.validateImageSize(edited)).thenReturn(true);
+    when(imageProcessingService.optimizeForProofGeneration(original))
+        .thenAnswer((_) async => original);
+    when(imageProcessingService.optimizeForProofGeneration(edited))
+        .thenAnswer((_) async => edited);
 
     final expectedProof = ImageProof.create(
       originalImageHash: 'orig',
@@ -75,11 +73,11 @@ void main() {
 
     when(
       proofService.generateProof(
-        originalImageData: anyNamed('originalImageData'),
-        editedImageData: anyNamed('editedImageData'),
-        transformations: anyNamed('transformations'),
-        isAnonymousSigner: anyNamed('isAnonymousSigner'),
-        signerId: anyNamed('signerId'),
+        originalImageData: original,
+        editedImageData: edited,
+        transformations: transformations,
+        isAnonymousSigner: true,
+        signerId: null,
       ),
     ).thenAnswer((_) async => expectedProof);
 
@@ -101,12 +99,113 @@ void main() {
     verify(imageProcessingService.processImage(original, transformations)).called(1);
     verify(
       proofService.generateProof(
-        originalImageData: anyNamed('originalImageData'),
-        editedImageData: anyNamed('editedImageData'),
+        originalImageData: original,
+        editedImageData: edited,
         transformations: transformations,
         isAnonymousSigner: true,
         signerId: null,
       ),
     ).called(1);
   });
+}
+
+class MockImageProofService extends Mock implements ImageProofService {
+  static final ImageProof _fallbackProof = ImageProof.create(
+    originalImageHash: 'fallback-orig',
+    editedImageHash: 'fallback-edit',
+    proof: 'fallback-proof',
+    transformations: const <ImageTransformation>[],
+    isAnonymousSigner: true,
+    signerId: null,
+    proofSize: 0,
+    metadata: const ProofMetadata(
+      generationTimeMs: 0,
+      memoryUsageMB: 0,
+      resolution: ImageResolution(width: 1, height: 1, megapixels: 0),
+      platform: 'test',
+      appVersion: '1.0.0',
+      algorithm: ProofAlgorithm.customVIMz,
+    ),
+  );
+
+  @override
+  Future<List<ImageProof>> getAllProofs() {
+    return super.noSuchMethod(
+      Invocation.method(#getAllProofs, const []),
+      returnValue: Future.value(<ImageProof>[]),
+    ) as Future<List<ImageProof>>;
+  }
+
+  @override
+  Future<ProofStatistics> getStatistics() {
+    return super.noSuchMethod(
+      Invocation.method(#getStatistics, const []),
+      returnValue: Future.value(
+        const ProofStatistics(
+          totalProofs: 0,
+          verifiedProofs: 0,
+          failedProofs: 0,
+          anonymousProofs: 0,
+          averageProofSize: 0,
+          algorithmCounts: <ProofAlgorithm, int>{},
+        ),
+      ),
+    ) as Future<ProofStatistics>;
+  }
+
+  @override
+  Future<ImageProof> generateProof({
+    required Uint8List originalImageData,
+    required Uint8List editedImageData,
+    required List<ImageTransformation> transformations,
+    bool isAnonymousSigner = true,
+    String? signerId,
+  }) {
+    return super.noSuchMethod(
+      Invocation.method(
+        #generateProof,
+        const [],
+        <Symbol, dynamic>{
+          #originalImageData: originalImageData,
+          #editedImageData: editedImageData,
+          #transformations: transformations,
+          #isAnonymousSigner: isAnonymousSigner,
+          #signerId: signerId,
+        },
+      ),
+      returnValue: Future.value(_fallbackProof),
+    ) as Future<ImageProof>;
+  }
+}
+
+class MockImageProcessingService extends Mock implements ImageProcessingService {
+  @override
+  Future<Uint8List> processImage(
+    Uint8List imageData,
+    List<ImageTransformation> transformations,
+  ) {
+    return super.noSuchMethod(
+      Invocation.method(
+        #processImage,
+        <Object?>[imageData, transformations],
+      ),
+      returnValue: Future.value(Uint8List(0)),
+    ) as Future<Uint8List>;
+  }
+
+  @override
+  bool validateImageSize(Uint8List imageData) {
+    return super.noSuchMethod(
+      Invocation.method(#validateImageSize, <Object?>[imageData]),
+      returnValue: true,
+    ) as bool;
+  }
+
+  @override
+  Future<Uint8List> optimizeForProofGeneration(Uint8List imageData) {
+    return super.noSuchMethod(
+      Invocation.method(#optimizeForProofGeneration, <Object?>[imageData]),
+      returnValue: Future.value(Uint8List(0)),
+    ) as Future<Uint8List>;
+  }
 }

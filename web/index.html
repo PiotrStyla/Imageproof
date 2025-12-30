@@ -161,10 +161,7 @@
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
-        // Service worker disabled to force cache refresh
-        // serviceWorker: {
-        //   serviceWorkerVersion: serviceWorkerVersion,
-        // },
+        entrypointUrl: 'main.dart.js?v=' + Date.now(),
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
             appRunner.runApp();
