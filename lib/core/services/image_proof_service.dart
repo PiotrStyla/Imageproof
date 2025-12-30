@@ -31,6 +31,9 @@ class ImageProofService {
     // Generate hashes for both images
     final originalHash = await _cryptoService.hashImage(originalImageData);
     final editedHash = await _cryptoService.hashImage(editedImageData);
+    
+    print('[ProofService] Generated editedImageHash: $editedHash');
+    print('[ProofService] editedImageData size: ${editedImageData.length} bytes');
 
     // Get image resolution
     final resolution = await _imageProcessingService.getImageResolution(originalImageData);

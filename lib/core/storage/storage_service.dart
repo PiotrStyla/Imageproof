@@ -112,10 +112,15 @@ class StorageService {
     }
 
     // Cache in Hive for fast access (works on all platforms)
-    await _saveToHiveWithRetry(proof.id, jsonString);
-    
-    // Update metadata cache for quick stats
-    await _updateMetadataCache(proof);
+    try {
+      await _saveToHiveWithRetry(proof.id, jsonString);
+      await _updateMetadataCache(proof);
+    } catch (e) {
+      if (!kIsWeb) {
+        rethrow;
+      }
+      print('[StorageService] Web storage unavailable, continuing without persistence: $e');
+    }
   }
 
   /// Update existing proof
@@ -135,8 +140,16 @@ class StorageService {
     }
 
     // Update cache
-    await _proofCache!.put(proof.id, jsonEncode(proof.toJson()));
-    await _updateMetadataCache(proof);
+    try {
+      await _ensureBoxesOpen();
+      await _proofCache!.put(proof.id, jsonEncode(proof.toJson()));
+      await _updateMetadataCache(proof);
+    } catch (e) {
+      if (!kIsWeb) {
+        rethrow;
+      }
+      print('[StorageService] Web storage update failed, continuing: $e');
+    }
   }
 
   /// Get proof by ID with cache-first strategy
@@ -331,12 +344,20 @@ class StorageService {
 
   /// Update metadata cache for analytics
   Future<void> _updateMetadataCache(ImageProof proof) async {
-    final stats = await getStatistics();
-    await _metadataCache!.put('stats', jsonEncode({
-      'total_proofs': stats.totalProofs,
-      'total_size': stats.totalStorageBytes,
-      'last_updated': DateTime.now().millisecondsSinceEpoch,
-    }));
+    try {
+      await _ensureBoxesOpen();
+      final stats = await getStatistics();
+      await _metadataCache!.put('stats', jsonEncode({
+        'total_proofs': stats.totalProofs,
+        'total_size': stats.totalStorageBytes,
+        'last_updated': DateTime.now().millisecondsSinceEpoch,
+      }));
+    } catch (e) {
+      if (!kIsWeb) {
+        rethrow;
+      }
+      print('[StorageService] Web metadata cache update failed, continuing: $e');
+    }
   }
 
   /// Calculate cache hit rate for monitoring
@@ -397,8 +418,11 @@ class StorageService {
         return; // Success
       } catch (e) {
         if (attempt == maxRetries - 1) {
-          // Last attempt failed, rethrow
-          throw Exception('Failed to save to Hive after $maxRetries attempts: $e');
+          if (!kIsWeb) {
+            throw Exception('Failed to save to Hive after $maxRetries attempts: $e');
+          }
+          print('[StorageService] Hive save failed on web after $maxRetries attempts: $e');
+          return;
         }
         // Wait before retry (exponential backoff)
         await Future.delayed(Duration(milliseconds: 100 * (attempt + 1)));

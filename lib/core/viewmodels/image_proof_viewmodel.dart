@@ -176,6 +176,9 @@ class ImageProofViewModel extends ChangeNotifier {
     _lastOptimizedEditedImage = optimizedEdited;
     _lastOptimizedEditedImageFormat =
         _imageProcessingService.getImageFormat(optimizedEdited);
+    
+    print('[ProofGen] Stored edited image size: ${optimizedEdited.length} bytes');
+    print('[ProofGen] Stored edited image format: $_lastOptimizedEditedImageFormat');
 
     // Generate proof
     final proof = await _proofService.generateProof(

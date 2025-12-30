@@ -6,9 +6,13 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vector_math/vector_math_64.dart' hide Colors;
 import '../core/viewmodels/image_proof_viewmodel.dart';
 import '../core/models/image_proof.dart';
+import '../core/crypto/crypto_service.dart';
+import '../core/services/service_initializer.dart';
 import 'package:image/image.dart' as img;
+import 'widgets/full_screen_image_editor.dart';
 
 /// Revolutionary proof generation view with drag-drop and real-time preview
 class GenerateProofView extends StatefulWidget {
@@ -31,6 +35,10 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   Offset? _selectionEnd;
   TransformationType? _activeSelectionType;
   final GlobalKey _imageKey = GlobalKey();
+  
+  // Zoom and pan controls
+  final TransformationController _transformationController = TransformationController();
+  double _currentZoom = 1.0;
 
   @override
   Widget build(BuildContext context) {
@@ -404,94 +412,165 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 )
               : ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: GestureDetector(
-                    onPanStart: _activeSelectionType != null ? (details) {
-                      setState(() {
-                        _selectionStart = details.localPosition;
-                        _selectionEnd = details.localPosition;
-                      });
-                    } : null,
-                    onPanUpdate: _activeSelectionType != null ? (details) {
-                      setState(() {
-                        _selectionEnd = details.localPosition;
-                      });
-                    } : null,
-                    onPanEnd: _activeSelectionType != null ? (details) {
-                      _createTransformationFromSelection();
-                    } : null,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.memory(
-                          key: _imageKey,
-                          image,
-                          fit: BoxFit.contain,
-                        ),
-                        if (_selectionStart != null && _selectionEnd != null)
-                          CustomPaint(
-                            painter: _SelectionPainter(
-                              start: _selectionStart!,
-                              end: _selectionEnd!,
-                              color: _getSelectionColor(),
-                            ),
+                  child: Stack(
+                    children: [
+                      InteractiveViewer(
+                        transformationController: _transformationController,
+                        minScale: 1.0,
+                        maxScale: 4.0,
+                        onInteractionUpdate: (details) {
+                          setState(() {
+                            _currentZoom = _transformationController.value.getMaxScaleOnAxis();
+                          });
+                        },
+                        child: GestureDetector(
+                          onPanStart: _activeSelectionType != null ? (details) {
+                            final RenderBox box = context.findRenderObject() as RenderBox;
+                            final offset = box.globalToLocal(details.globalPosition);
+                            setState(() {
+                              _selectionStart = offset;
+                              _selectionEnd = offset;
+                            });
+                          } : null,
+                          onPanUpdate: _activeSelectionType != null ? (details) {
+                            final RenderBox box = context.findRenderObject() as RenderBox;
+                            final offset = box.globalToLocal(details.globalPosition);
+                            setState(() {
+                              _selectionEnd = offset;
+                            });
+                          } : null,
+                          onPanEnd: _activeSelectionType != null ? (details) {
+                            _createTransformationFromSelection();
+                          } : null,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.memory(
+                                key: _imageKey,
+                                image,
+                                fit: BoxFit.contain,
+                              ),
+                              if (_selectionStart != null && _selectionEnd != null)
+                                CustomPaint(
+                                  painter: _SelectionPainter(
+                                    start: _selectionStart!,
+                                    end: _selectionEnd!,
+                                    color: _getSelectionColor(),
+                                  ),
+                                ),
+                            ],
                           ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.fullscreen, color: Colors.white),
+                                    tooltip: 'Full Screen Editor',
+                                    onPressed: () => _openFullScreenEditor(),
+                                  ),
+                                  const Divider(height: 1, color: Colors.white24),
+                                  IconButton(
+                                    icon: const Icon(Icons.add, color: Colors.white),
+                                    tooltip: 'Zoom In',
+                                    onPressed: () {
+                                      final newScale = (_currentZoom * 1.3).clamp(1.0, 4.0);
+                                      _transformationController.value = Matrix4.identity()..scale(newScale);
+                                      setState(() => _currentZoom = newScale);
+                                    },
+                                  ),
+                                  Text(
+                                    '${(_currentZoom * 100).toInt()}%',
+                                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.remove, color: Colors.white),
+                                    tooltip: 'Zoom Out',
+                                    onPressed: () {
+                                      final newScale = (_currentZoom / 1.3).clamp(1.0, 4.0);
+                                      _transformationController.value = Matrix4.identity()..scale(newScale);
+                                      setState(() => _currentZoom = newScale);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.fit_screen, color: Colors.white),
+                                    tooltip: 'Reset Zoom',
+                                    onPressed: () {
+                                      _transformationController.value = Matrix4.identity();
+                                      setState(() => _currentZoom = 1.0);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.black54,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _originalImage = null;
+                                  _selectionStart = null;
+                                  _selectionEnd = null;
+                                  _activeSelectionType = null;
+                                  _transformationController.value = Matrix4.identity();
+                                  _currentZoom = 1.0;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_activeSelectionType != null)
                         Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.black54,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _originalImage = null;
-                                _selectionStart = null;
-                                _selectionEnd = null;
-                                _activeSelectionType = null;
-                              });
-                            },
-                          ),
-                        ),
-                        if (_activeSelectionType != null)
-                          Positioned(
-                            bottom: 16,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.black87,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.touch_app, color: _getSelectionColor(), size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Drag to select region',
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _activeSelectionType = null;
-                                          _selectionStart = null;
-                                          _selectionEnd = null;
-                                        });
-                                      },
-                                      child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-                                    ),
-                                  ],
-                                ),
+                          bottom: 16,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.touch_app, color: _getSelectionColor(), size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Drag to select region • Scroll to zoom',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _activeSelectionType = null;
+                                        _selectionStart = null;
+                                        _selectionEnd = null;
+                                      });
+                                    },
+                                    child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
         ),
@@ -1110,13 +1189,20 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     }
   }
 
-  void _downloadOptimizedEditedImage(ImageProof proof) {
+  void _downloadOptimizedEditedImage(ImageProof proof) async {
     try {
       final viewModel = Provider.of<ImageProofViewModel>(context, listen: false);
       final editedImage = viewModel.lastOptimizedEditedImage;
       final format = viewModel.lastOptimizedEditedImageFormat;
       
       if (editedImage != null && editedImage.isNotEmpty) {
+        // Debug: Calculate hash of what we're downloading
+        final cryptoService = getIt<CryptoService>();
+        final downloadHash = await cryptoService.hashImage(editedImage);
+        debugPrint('[Download] Edited image hash: $downloadHash');
+        debugPrint('[Download] Proof edited hash: ${proof.editedImageHash}');
+        debugPrint('[Download] Hashes match: ${downloadHash == proof.editedImageHash}');
+        debugPrint('[Download] Image size: ${editedImage.length} bytes, format: $format');
         final mimeType = switch (format) {
           'jpeg' => 'image/jpeg',
           'png' => 'image/png',
@@ -1197,11 +1283,18 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
     final imageSize = renderBox.size;
     
+    // Transform coordinates by inverse of zoom matrix to get actual image coordinates
+    final matrix = _transformationController.value;
+    final inverseMatrix = Matrix4.inverted(matrix);
+    
+    final transformedStart = inverseMatrix.transform3(Vector3(_selectionStart!.dx, _selectionStart!.dy, 0));
+    final transformedEnd = inverseMatrix.transform3(Vector3(_selectionEnd!.dx, _selectionEnd!.dy, 0));
+    
     // Calculate selection rectangle
-    final left = _selectionStart!.dx.clamp(0.0, imageSize.width);
-    final top = _selectionStart!.dy.clamp(0.0, imageSize.height);
-    final right = _selectionEnd!.dx.clamp(0.0, imageSize.width);
-    final bottom = _selectionEnd!.dy.clamp(0.0, imageSize.height);
+    final left = transformedStart.x.clamp(0.0, imageSize.width);
+    final top = transformedStart.y.clamp(0.0, imageSize.height);
+    final right = transformedEnd.x.clamp(0.0, imageSize.width);
+    final bottom = transformedEnd.y.clamp(0.0, imageSize.height);
     
     final x = left < right ? left : right;
     final y = top < bottom ? top : bottom;
@@ -1278,6 +1371,31 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       _selectionEnd = null;
       _activeSelectionType = null;
     });
+  }
+
+  void _openFullScreenEditor() {
+    if (_originalImage == null) return;
+
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      barrierColor: Colors.black,
+      builder: (context) => Dialog.fullscreen(
+        child: FullScreenImageEditor(
+          image: _originalImage!,
+          activeSelectionType: _activeSelectionType,
+          onTransformationAdded: (transformation) {
+            setState(() {
+              _transformations.add(transformation);
+            });
+            Navigator.pop(context);
+          },
+          onSelectionTypeChanged: (type) {
+            setState(() => _activeSelectionType = type);
+          },
+        ),
+      ),
+    );
   }
 }
 

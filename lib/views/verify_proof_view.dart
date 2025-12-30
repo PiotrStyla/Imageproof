@@ -692,7 +692,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Upload the edited_image_*.png file that was downloaded alongside the proof. This verifies the edited image is exactly the one the proof was generated for.',
+                          'Upload the edited_image_*.jpg file that was downloaded alongside the proof. This verifies the edited/final image (with transformations applied) matches this proof. You do NOT need the original source image.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.blue[900],
@@ -740,6 +740,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
 
   Widget _buildImageMatchResult() {
     final isMatch = _imageMatchResult ?? false;
+    
     return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -763,7 +764,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isMatch ? 'Image Match Verified!' : 'Image Does NOT Match',
+                      isMatch ? 'Image Verified ✓' : 'Image Does NOT Match',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -773,8 +774,8 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                     const SizedBox(height: 4),
                     Text(
                       isMatch
-                          ? 'The uploaded image cryptographically matches this proof'
-                          : 'This image does not match the proof. It may be a different edited version or tampered with.',
+                          ? 'This edited image cryptographically matches the proof. The transformations are authentic and verified.'
+                          : 'This image does not match the proof. It may be a different edited version or has been tampered with.',
                       style: TextStyle(
                         fontSize: 14,
                         color: isMatch ? Colors.green.shade700 : Colors.red.shade700,
@@ -804,6 +805,12 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
         // Calculate hash of uploaded image
         final cryptoService = getIt<CryptoService>();
         final imageHash = await cryptoService.hashImage(_uploadedImage!);
+        
+        // Debug logging
+        print('[Verify] Uploaded image size: ${_uploadedImage!.length} bytes');
+        print('[Verify] Uploaded image hash: $imageHash');
+        print('[Verify] Proof editedImageHash: ${proof.editedImageHash}');
+        print('[Verify] Hashes match: ${imageHash == proof.editedImageHash}');
 
         // Compare with proof's edited image hash
         final matches = imageHash == proof.editedImageHash;
