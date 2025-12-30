@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -10,25 +9,21 @@ import '../models/image_proof.dart';
 class CryptoService {
   late Sha256 _sha256;
   late Hmac _hmac;
-  bool _initialized = false;
   
   // Secret key for HMAC (in production, this would be derived securely)
-  late List<int> _secretKey;
+  late SecretKey _secretKey;
 
   /// Initialize cryptographic components
   Future<void> initialize() async {
     _sha256 = Sha256();
-    _secretKey = List.generate(32, (i) => Random.secure().nextInt(256));
-    _hmac = Hmac(_sha256);
-    _initialized = true;
-    print('[CryptoService] Initialized with SHA-256 and HMAC');
+    final keyBytes = List.generate(32, (i) => Random.secure().nextInt(256));
+    _secretKey = SecretKey(keyBytes);
+    _hmac = Hmac.sha256();
   }
 
   /// Generate cryptographic hash of image data using SHA-256
   Future<String> hashImage(Uint8List imageData) async {
-    print('[CryptoService] Hashing image (${imageData.length} bytes)...');
     final hash = await _sha256.hash(imageData);
-    print('[CryptoService] Image hash complete');
     return base64Encode(hash.bytes);
   }
 
@@ -39,25 +34,20 @@ class CryptoService {
     Uint8List editedImage,
     List<ImageTransformation> transformations,
   ) async {
-    print('[CryptoService] Starting proof generation...');
     final startTime = DateTime.now();
     
     // Step 1: Hash both images (single hash each, not per-chunk)
-    print('[CryptoService] Step 1: Hashing original image...');
     final originalHash = await _sha256.hash(originalImage);
     await Future.delayed(Duration.zero); // Yield to UI
     
-    print('[CryptoService] Step 2: Hashing edited image...');
     final editedHash = await _sha256.hash(editedImage);
     await Future.delayed(Duration.zero); // Yield to UI
     
     // Step 2: Create transformation commitment (Merkle root of all transformations)
-    print('[CryptoService] Step 3: Creating transformation commitment...');
     final transformationCommitment = await _createTransformationCommitment(transformations);
     await Future.delayed(Duration.zero); // Yield to UI
     
     // Step 3: Create binding commitment linking original -> transformations -> edited
-    print('[CryptoService] Step 4: Creating binding commitment...');
     final bindingData = Uint8List.fromList([
       ...originalHash.bytes,
       ...editedHash.bytes,
@@ -65,12 +55,11 @@ class CryptoService {
     ]);
     final bindingCommitment = await _hmac.calculateMac(
       bindingData,
-      secretKey: SecretKey(_secretKey),
+      secretKey: _secretKey,
     );
     await Future.delayed(Duration.zero); // Yield to UI
     
     // Step 4: Create final proof structure
-    print('[CryptoService] Step 5: Building proof structure...');
     final proof = ProofData(
       version: 1,
       algorithm: 'SHA256-HMAC-COMMITMENT',
@@ -125,8 +114,6 @@ class CryptoService {
     List<ImageTransformation> transformations,
   ) async {
     try {
-      print('[CryptoService] Starting proof verification...');
-      
       // Decode proof
       final proofBytes = base64Decode(proofData);
       final proofJson = utf8.decode(proofBytes);
@@ -135,25 +122,21 @@ class CryptoService {
       
       // Verify image hashes match
       if (proof.originalImageHash != originalImageHash) {
-        print('[CryptoService] Original image hash mismatch');
         return false;
       }
       
       if (proof.editedImageHash != editedImageHash) {
-        print('[CryptoService] Edited image hash mismatch');
         return false;
       }
       
       // Verify transformation count
       if (proof.transformationCount != transformations.length) {
-        print('[CryptoService] Transformation count mismatch');
         return false;
       }
       
       // Verify transformation commitment
       final expectedCommitment = await _createTransformationCommitment(transformations);
       if (proof.transformationCommitment != base64Encode(expectedCommitment)) {
-        print('[CryptoService] Transformation commitment mismatch');
         return false;
       }
       
@@ -165,25 +148,22 @@ class CryptoService {
       ]);
       final expectedBinding = await _hmac.calculateMac(
         bindingData,
-        secretKey: SecretKey(_secretKey),
+        secretKey: _secretKey,
       );
       
       if (proof.bindingCommitment != base64Encode(expectedBinding.bytes)) {
-        print('[CryptoService] Binding commitment mismatch');
         return false;
       }
       
-      print('[CryptoService] Proof verified successfully!');
       return true;
     } catch (e) {
-      print('[CryptoService] Verification error: $e');
       return false;
     }
   }
 
   /// Cleanup resources
   Future<void> cleanup() async {
-    _initialized = false;
+    // Cleanup if needed
   }
 }
 
