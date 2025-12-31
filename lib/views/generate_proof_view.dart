@@ -84,7 +84,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   Widget _buildGeneratingView(ImageProofViewModel viewModel) {
     final progress = viewModel.generationProgress;
     final progressPercent = (progress * 100).toInt();
-    final estimatedTimeRemaining = ((1 - progress) * 180).toInt(); // ~3 min total
+    final estimatedTimeRemaining = ((1 - progress) * 300).toInt(); // ~3 min total
     
     String currentPhase;
     if (progress < 0.2) {

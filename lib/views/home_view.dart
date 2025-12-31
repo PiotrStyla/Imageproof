@@ -87,7 +87,7 @@ class HomeView extends StatelessWidget {
               context,
               '3',
               'App Applies Blur + Generates Proof',
-              'Click "Generate Proof" → App blurs/redacts FOR YOU → Wait ~3 min → Download both files',
+              'Click "Generate Proof" → App blurs/redacts FOR YOU → Wait up to 5 min → Download both files',
               Icons.auto_fix_high,
             ),
             const SizedBox(height: 12),
@@ -95,33 +95,8 @@ class HomeView extends StatelessWidget {
               context,
               '4',
               'Share Protected Image + Proof',
-              'Send proof.json + blurred_image.png → Anyone can verify it\'s authentic (your original stays private)',
+              'Send proof.json + blurred_image.png → Anyone can verify it\'s authentic using SealZero.dev (your original stays private)',
               Icons.share,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.lightbulb_outline, color: Colors.blue.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '⚠️ IMPORTANT: You upload the ORIGINAL image. The app applies blur/redact automatically when generating the proof. Default region is 200x200px at position (100,100) - adjust these numbers to match where your sensitive data is located.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.blue.shade900,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
@@ -282,7 +257,8 @@ class HomeView extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.add_photo_alternate,
                 title: 'Generate Proof',
-                subtitle: 'Create ZK proof for edited image',
+                subtitle:
+                    'Upload an original document to modify it - blur, redact, pixelate some parts of it and generate proof',
                 color: Colors.indigo,
                 onTap: () {
                   context.go('/generate');

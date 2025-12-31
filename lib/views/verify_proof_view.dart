@@ -236,6 +236,57 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
     );
   }
 
+  Widget _buildProofDetailsCard(ImageProof proof) {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Proof Details',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow(
+              'Proof ID',
+              proof.id.substring(0, 8),
+              Icons.fingerprint,
+            ),
+            _buildDetailRow(
+              'Created',
+              _formatDate(proof.createdAt),
+              Icons.calendar_today,
+            ),
+            _buildDetailRow(
+              'Transformations',
+              '${proof.transformations.length}',
+              Icons.transform,
+            ),
+            _buildDetailRow(
+              'Proof Size',
+              '${(proof.proofSize / 1024).toStringAsFixed(2)} KB',
+              Icons.data_usage,
+            ),
+            _buildDetailRow(
+              'Algorithm',
+              'Simple Metadata',
+              Icons.memory,
+            ),
+            _buildDetailRow(
+              'Signer',
+              proof.isAnonymousSigner ? 'Anonymous' : proof.signerId ?? 'Unknown',
+              Icons.person,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildResultView(bool isValid, ImageProof proof) {
     _animationController.forward(from: 0.0);
 
@@ -291,56 +342,36 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Proof Details',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      'Proof ID',
-                      proof.id.substring(0, 8),
-                      Icons.fingerprint,
-                    ),
-                    _buildDetailRow(
-                      'Created',
-                      _formatDate(proof.createdAt),
-                      Icons.calendar_today,
-                    ),
-                    _buildDetailRow(
-                      'Transformations',
-                      '${proof.transformations.length}',
-                      Icons.transform,
-                    ),
-                    _buildDetailRow(
-                      'Proof Size',
-                      '${(proof.proofSize / 1024).toStringAsFixed(2)} KB',
-                      Icons.data_usage,
-                    ),
-                    _buildDetailRow(
-                      'Algorithm',
-                      'Simple Metadata',
-                      Icons.memory,
-                    ),
-                    _buildDetailRow(
-                      'Signer',
-                      proof.isAnonymousSigner ? 'Anonymous' : proof.signerId ?? 'Unknown',
-                      Icons.person,
-                    ),
-                  ],
-                ),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 1100;
+
+                if (!isWide) {
+                  return Column(
+                    children: [
+                      _buildProofDetailsCard(proof),
+                      const SizedBox(height: 24),
+                      _buildImageVerificationSection(proof),
+                    ],
+                  );
+                }
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildProofDetailsCard(proof),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: _buildImageVerificationSection(proof),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 24),
-            _buildImageVerificationSection(proof),
             const SizedBox(height: 32),
             Wrap(
               alignment: WrapAlignment.center,
@@ -722,12 +753,20 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                   Center(
                     child: ElevatedButton.icon(
                       onPressed: () => _pickImageToVerify(proof),
-                      icon: const Icon(Icons.upload_file),
+                      icon: const Icon(Icons.upload_file, size: 26),
                       label: const Text('Upload Edited Image'),
                       style: ElevatedButton.styleFrom(
+                        minimumSize: Size(
+                          MediaQuery.of(context).size.width < 420 ? 240 : 320,
+                          56,
+                        ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
+                          horizontal: 32,
+                          vertical: 18,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
