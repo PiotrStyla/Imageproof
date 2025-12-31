@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/viewmodels/image_proof_viewmodel.dart';
 import '../widgets/charity_footer.dart';
 import '../widgets/cookie_consent_banner.dart';
@@ -8,6 +9,11 @@ import '../widgets/cookie_consent_banner.dart';
 /// Modern home view with glassmorphism and real-time stats
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
+
+  void _openExternalUrl(String url) {
+    final uri = Uri.parse(url);
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +28,8 @@ class HomeView extends StatelessWidget {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _buildHowToSection(context),
+                    const SizedBox(height: 32),
+                    _buildZkExplainerSection(context),
                     const SizedBox(height: 32),
                     _buildUseCasesSection(context),
                     const SizedBox(height: 32),
@@ -41,6 +49,100 @@ class HomeView extends StatelessWidget {
           const CookieConsentBanner(),
         ],
       ),
+    );
+  }
+
+  Widget _buildZkExplainerSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified_user_rounded,
+                    color: Colors.deepPurple.shade700, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Privacy with Proof: Zero-Knowledge Verification',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'SealZero uses zero-knowledge proofs (ZKPs) to prove your redacted/blurred image is authentic, without revealing your original document.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildZkBenefitRow(
+              context,
+              icon: Icons.lock_outline,
+              title: 'Keep the original private',
+              description: 'Share only the protected image + proof file.',
+            ),
+            const SizedBox(height: 10),
+            _buildZkBenefitRow(
+              context,
+              icon: Icons.verified_outlined,
+              title: 'Anyone can verify it',
+              description: 'Verification works without trusting your device or editor.',
+            ),
+            const SizedBox(height: 10),
+            _buildZkBenefitRow(
+              context,
+              icon: Icons.shield_outlined,
+              title: 'Tamper-evident sharing',
+              description: 'If the image is modified later, verification fails.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZkBenefitRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 22, color: Colors.deepPurple.shade700),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -337,9 +439,12 @@ class HomeView extends StatelessWidget {
               child: _UseCaseCard(
                 icon: Icons.article,
                 title: 'Journalism',
-                description: 'Prove document authenticity while protecting sources',
-                example: 'Leaked memo with redacted names',
+                description: 'Prove authenticity while protecting sources',
+                example: 'Redacted memo with protected names',
                 color: Colors.orange,
+                onTap: () {
+                  _openExternalUrl('https://youtube.com/shorts/WOWN9DGS9PM');
+                },
               ),
             ),
             const SizedBox(width: 16),
@@ -348,8 +453,11 @@ class HomeView extends StatelessWidget {
                 icon: Icons.warning_amber_rounded,
                 title: 'Whistleblowing',
                 description: 'Share evidence without revealing identity',
-                example: 'Internal emails with masked metadata',
+                example: 'Documents with sensitive details removed',
                 color: Colors.red,
+                onTap: () {
+                  _openExternalUrl('https://youtu.be/rXXHFO7HnI8');
+                },
               ),
             ),
             const SizedBox(width: 16),
@@ -357,9 +465,13 @@ class HomeView extends StatelessWidget {
               child: _UseCaseCard(
                 icon: Icons.gavel,
                 title: 'GDPR Compliance',
-                description: 'Publish research with privacy protection',
-                example: 'Study photos with blurred faces',
+                description: 'Publish and collaborate safely',
+                example: 'Personal data blurred/redacted',
                 color: Colors.blue,
+                onTap: () {
+                  _openExternalUrl(
+                      'https://youtube.com/shorts/EsyXVCHSogw?feature=share');
+                },
               ),
             ),
           ],
@@ -375,6 +487,7 @@ class _UseCaseCard extends StatelessWidget {
   final String description;
   final String example;
   final Color color;
+  final VoidCallback? onTap;
 
   const _UseCaseCard({
     required this.icon,
@@ -382,47 +495,52 @@ class _UseCaseCard extends StatelessWidget {
     required this.description,
     required this.example,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-              child: Text(
-                'Ex: $example',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontStyle: FontStyle.italic,
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Ex: $example',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: color,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" fill="none">
+  <title>SealZero Watermark (Horizontal)</title>
+  <desc>Transparent watermark for video overlays. Uses currentColor so it can be recolored in editors. Default is white with subtle opacity.</desc>
+
+  <g opacity="0.35" fill="currentColor" stroke="currentColor">
+    <!-- Icon (based on web/favicon.svg) -->
+    <g transform="translate(40 30)">
+      <!-- Outer ring -->
+      <circle cx="120" cy="120" r="105" fill="none" stroke-width="22" />
+
+      <!-- Shield -->
+      <path d="M120 58 L167 81 L167 124 C167 157 144 181 120 202 C96 181 73 157 73 124 L73 81 Z" fill="currentColor" stroke="none" />
+
+      <!-- Checkmark -->
+      <path d="M104 126 L116 138 L141 111" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- Wordmark -->
+    <g transform="translate(320 88)" fill="currentColor" stroke="none">
+      <text x="0" y="0" font-family="Inter, Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="0.5">SealZero</text>
+      <text x="0" y="70" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="600" opacity="0.9">Privacy with Proof • Zero-Knowledge Verification</text>
+    </g>
+  </g>
+</svg>

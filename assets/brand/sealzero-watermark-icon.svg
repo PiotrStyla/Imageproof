@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>SealZero Watermark (Icon)</title>
+  <desc>Transparent icon watermark for video overlays. Uses currentColor so it can be recolored in editors. Default is white with subtle opacity.</desc>
+
+  <g opacity="0.35" fill="currentColor" stroke="currentColor">
+    <!-- Outer ring -->
+    <circle cx="256" cy="256" r="215" fill="none" stroke-width="44" />
+
+    <!-- Shield (based on web/favicon.svg / web/icons/logo.svg) -->
+    <path d="M256 150 L340 184 L340 262 C340 320 300 364 256 400 C212 364 172 320 172 262 L172 184 Z" fill="currentColor" stroke="none" />
+
+    <!-- Checkmark -->
+    <path d="M228 270 L248 292 L292 242" fill="none" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
