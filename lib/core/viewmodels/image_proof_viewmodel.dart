@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../models/image_proof.dart';
 import '../services/image_proof_service.dart';
@@ -23,8 +22,8 @@ class ImageProofViewModel extends ChangeNotifier {
   ImageProofViewModel({
     required ImageProofService proofService,
     required ImageProcessingService imageProcessingService,
-  })  : _proofService = proofService,
-        _imageProcessingService = imageProcessingService {
+  }) : _proofService = proofService,
+       _imageProcessingService = imageProcessingService {
     _loadProofs();
     _loadStatistics();
   }
@@ -75,17 +74,21 @@ class ImageProofViewModel extends ChangeNotifier {
     _setProgress(0.0);
 
     try {
-      print('[ProofGen] Stage 1: Applying ${transformations.length} transformations...');
+      debugPrint(
+        '[ProofGen] Stage 1: Applying ${transformations.length} transformations...',
+      );
       // Apply transformations to create edited image
       _setProgress(0.1);
       final editedImage = await _imageProcessingService.processImage(
         originalImage,
         transformations,
       );
-      print('[ProofGen] Stage 1 complete - edited image created (${editedImage.length} bytes)');
+      debugPrint(
+        '[ProofGen] Stage 1 complete - edited image created (${editedImage.length} bytes)',
+      );
 
       _setProgress(0.3);
-      print('[ProofGen] Stage 2: Generating proof...');
+      debugPrint('[ProofGen] Stage 2: Generating proof...');
 
       final proof = await _generateProofStage2(
         originalImage: originalImage,
@@ -99,7 +102,7 @@ class ImageProofViewModel extends ChangeNotifier {
       _setGenerating(false);
       return proof;
     } catch (e) {
-      print('[ProofGen] ERROR: $e');
+      debugPrint('[ProofGen] ERROR: $e');
       _setError('Failed to generate proof: $e');
       _setGenerating(false);
       return null;
@@ -155,30 +158,41 @@ class ImageProofViewModel extends ChangeNotifier {
 
     // Validate images
     _setProgress(mapProgress(0.1));
-    final isOriginalValid = _imageProcessingService.validateImageSize(originalImage);
-    final isEditedValid = _imageProcessingService.validateImageSize(editedImage);
+    final isOriginalValid = _imageProcessingService.validateImageSize(
+      originalImage,
+    );
+    final isEditedValid = _imageProcessingService.validateImageSize(
+      editedImage,
+    );
 
     if (!isOriginalValid || !isEditedValid) {
-      throw Exception('Image size exceeds maximum allowed (100MB or 8K resolution)');
+      throw Exception(
+        'Image size exceeds maximum allowed (100MB or 8K resolution)',
+      );
     }
 
     _setProgress(mapProgress(0.2));
 
     // Optimize images for proof generation
-    final optimizedOriginal =
-        await _imageProcessingService.optimizeForProofGeneration(originalImage);
-    final optimizedEdited =
-        await _imageProcessingService.optimizeForProofGeneration(editedImage);
+    final optimizedOriginal = await _imageProcessingService
+        .optimizeForProofGeneration(originalImage);
+    final optimizedEdited = await _imageProcessingService
+        .optimizeForProofGeneration(editedImage);
 
     _setProgress(mapProgress(0.4));
 
     // Store optimized edited image for download
     _lastOptimizedEditedImage = optimizedEdited;
-    _lastOptimizedEditedImageFormat =
-        _imageProcessingService.getImageFormat(optimizedEdited);
-    
-    print('[ProofGen] Stored edited image size: ${optimizedEdited.length} bytes');
-    print('[ProofGen] Stored edited image format: $_lastOptimizedEditedImageFormat');
+    _lastOptimizedEditedImageFormat = _imageProcessingService.getImageFormat(
+      optimizedEdited,
+    );
+
+    debugPrint(
+      '[ProofGen] Stored edited image size: ${optimizedEdited.length} bytes',
+    );
+    debugPrint(
+      '[ProofGen] Stored edited image format: $_lastOptimizedEditedImageFormat',
+    );
 
     // Generate proof
     final proof = await _proofService.generateProof(
@@ -235,11 +249,11 @@ class ImageProofViewModel extends ChangeNotifier {
     try {
       await _proofService.deleteProof(proofId);
       _proofs.removeWhere((p) => p.id == proofId);
-      
+
       if (_currentProof?.id == proofId) {
         _currentProof = null;
       }
-      
+
       await _loadStatistics();
       notifyListeners();
     } catch (e) {

@@ -22,34 +22,38 @@ class AppRouter {
         GoRoute(
           path: '/home',
           name: 'home',
-          builder: (context, state) => ChangeNotifierProvider(
-            create: (_) => getIt<ImageProofViewModel>(),
-            child: const HomeView(),
-          ),
+          builder:
+              (context, state) => ChangeNotifierProvider(
+                create: (_) => getIt<ImageProofViewModel>(),
+                child: const HomeView(),
+              ),
         ),
         GoRoute(
           path: '/generate',
           name: 'generate',
-          builder: (context, state) => ChangeNotifierProvider(
-            create: (_) => getIt<ImageProofViewModel>(),
-            child: const GenerateProofView(),
-          ),
+          builder:
+              (context, state) => ChangeNotifierProvider(
+                create: (_) => getIt<ImageProofViewModel>(),
+                child: const GenerateProofView(),
+              ),
         ),
         GoRoute(
           path: '/verify',
           name: 'verify',
-          builder: (context, state) => ChangeNotifierProvider(
-            create: (_) => getIt<ImageProofViewModel>(),
-            child: const VerifyProofView(),
-          ),
+          builder:
+              (context, state) => ChangeNotifierProvider(
+                create: (_) => getIt<ImageProofViewModel>(),
+                child: const VerifyProofView(),
+              ),
         ),
         GoRoute(
           path: '/proofs',
           name: 'proofs',
-          builder: (context, state) => ChangeNotifierProvider(
-            create: (_) => getIt<ImageProofViewModel>(),
-            child: const PerformanceDashboardView(),
-          ),
+          builder:
+              (context, state) => ChangeNotifierProvider(
+                create: (_) => getIt<ImageProofViewModel>(),
+                child: const PerformanceDashboardView(),
+              ),
         ),
         GoRoute(
           path: '/privacy',
@@ -67,11 +71,9 @@ class AppRouter {
           builder: (context, state) => const TermsOfServiceView(),
         ),
       ],
-      errorBuilder: (context, state) => Scaffold(
-        body: Center(
-          child: Text('Error: ${state.error}'),
-        ),
-      ),
+      errorBuilder:
+          (context, state) =>
+              Scaffold(body: Center(child: Text('Error: ${state.error}'))),
     );
   }
 }

@@ -1,20 +1,18 @@
 import 'dart:typed_data';
+import 'dart:developer' as developer;
 import 'package:image/image.dart' as img;
 import '../models/image_proof.dart';
-import '../storage/storage_service.dart';
 
 /// Advanced image processing service with GPU-accelerated operations
 /// Supports high-resolution images up to 8K (33MP) as per VIMz specifications
 class ImageProcessingService {
-  final StorageService _storageService;
   final Map<String, Uint8List> _imageCache = {};
-  
+
   static const int maxImageSize = 100 * 1024 * 1024; // 100MB
   static const int maxWidth = 7680; // 8K width
   static const int maxHeight = 4320; // 8K height
 
-  ImageProcessingService({required StorageService storageService})
-      : _storageService = storageService;
+  ImageProcessingService();
 
   /// Get image resolution from raw data
   Future<ImageResolution> getImageResolution(Uint8List imageData) async {
@@ -31,28 +29,42 @@ class ImageProcessingService {
     Uint8List imageData,
     List<ImageTransformation> transformations,
   ) async {
-    print('[ImageProcessing] Starting processImage with ${transformations.length} transformations');
+    developer.log(
+      'Starting processImage with ${transformations.length} transformations',
+      name: 'ImageProcessingService',
+    );
     var currentImage = img.decodeImage(imageData);
     if (currentImage == null) {
       throw Exception('Failed to decode image');
     }
-    print('[ImageProcessing] Image decoded: ${currentImage.width}x${currentImage.height}');
+    developer.log(
+      'Image decoded: ${currentImage.width}x${currentImage.height}',
+      name: 'ImageProcessingService',
+    );
 
     // Apply transformations sequentially
     for (int i = 0; i < transformations.length; i++) {
       final transformation = transformations[i];
-      print('[ImageProcessing] Applying transformation ${i + 1}/${transformations.length}: ${transformation.type}');
+      developer.log(
+        'Applying transformation ${i + 1}/${transformations.length}: ${transformation.type}',
+        name: 'ImageProcessingService',
+      );
       currentImage = await _applyTransformation(currentImage!, transformation);
-      print('[ImageProcessing] Transformation ${i + 1} complete');
-      
+      developer.log(
+        'Transformation ${i + 1} complete',
+        name: 'ImageProcessingService',
+      );
+
       // Yield to event loop after each transformation
       await Future.delayed(Duration.zero);
     }
 
-    print('[ImageProcessing] Encoding final image');
+    developer.log('Encoding final image', name: 'ImageProcessingService');
     // Encode back to bytes with optimal compression
-    final result = Uint8List.fromList(img.encodeJpg(currentImage!, quality: 95));
-    print('[ImageProcessing] processImage complete');
+    final result = Uint8List.fromList(
+      img.encodeJpg(currentImage!, quality: 95),
+    );
+    developer.log('processImage complete', name: 'ImageProcessingService');
     return result;
   }
 
@@ -64,33 +76,30 @@ class ImageProcessingService {
     switch (transformation.type) {
       case TransformationType.crop:
         return _applyCrop(image, transformation.parameters);
-      
+
       case TransformationType.resize:
         return _applyResize(image, transformation.parameters);
-      
+
       case TransformationType.rotate:
         return _applyRotate(image, transformation.parameters);
-      
+
       case TransformationType.blurRegion:
         return _applyBlurRegion(image, transformation.parameters);
-      
+
       case TransformationType.redactRegion:
         return _applyRedactRegion(image, transformation.parameters);
-      
+
       case TransformationType.pixelateRegion:
         return _applyPixelateRegion(image, transformation.parameters);
-      
+
       case TransformationType.colorAdjust:
         return _applyColorAdjust(image, transformation.parameters);
-      
+
       case TransformationType.brightness:
         return _applyBrightness(image, transformation.parameters);
-      
+
       case TransformationType.contrast:
         return _applyContrast(image, transformation.parameters);
-      
-      default:
-        return image;
     }
   }
 
@@ -101,12 +110,7 @@ class ImageProcessingService {
     final width = params['width'] as int? ?? image.width;
     final height = params['height'] as int? ?? image.height;
 
-    return img.copyCrop(image, 
-      x: x, 
-      y: y, 
-      width: width, 
-      height: height
-    );
+    return img.copyCrop(image, x: x, y: y, width: width, height: height);
   }
 
   /// Resize with high-quality interpolation
@@ -115,7 +119,8 @@ class ImageProcessingService {
     final height = params['height'] as int? ?? image.height;
     final interpolation = params['interpolation'] as String? ?? 'cubic';
 
-    return img.copyResize(image,
+    return img.copyResize(
+      image,
       width: width,
       height: height,
       interpolation: _getInterpolation(interpolation),
@@ -136,20 +141,35 @@ class ImageProcessingService {
     final height = params['height'] as int? ?? 100;
     final radius = params['radius'] as int? ?? 10;
 
-    print('[BlurRegion] Applying blur: region=${width}x${height}, radius=$radius');
-    
+    developer.log(
+      'Applying blur: region=${width}x$height, radius=$radius',
+      name: 'ImageProcessingService',
+    );
+
     // Extract region
-    final region = img.copyCrop(image, x: x, y: y, width: width, height: height);
-    print('[BlurRegion] Region extracted, starting gaussianBlur...');
-    
+    final region = img.copyCrop(
+      image,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+    );
+    developer.log(
+      'Region extracted, starting gaussianBlur...',
+      name: 'ImageProcessingService',
+    );
+
     // Blur the region - EXPENSIVE OPERATION
     // For large regions or high radius, this can block for seconds
     final blurred = img.gaussianBlur(region, radius: radius);
-    print('[BlurRegion] Blur complete, compositing...');
-    
+    developer.log(
+      'Blur complete, compositing...',
+      name: 'ImageProcessingService',
+    );
+
     // Composite back onto original
     final result = img.compositeImage(image, blurred, dstX: x, dstY: y);
-    print('[BlurRegion] Complete');
+    developer.log('Blur region complete', name: 'ImageProcessingService');
     return result;
   }
 
@@ -161,7 +181,8 @@ class ImageProcessingService {
     final height = params['height'] as int? ?? 100;
 
     // Draw black rectangle over region
-    return img.fillRect(image,
+    return img.fillRect(
+      image,
       x1: x,
       y1: y,
       x2: x + width,
@@ -179,21 +200,29 @@ class ImageProcessingService {
     final pixelSize = params['pixelSize'] as int? ?? 10;
 
     // Extract region
-    final region = img.copyCrop(image, x: x, y: y, width: width, height: height);
-    
+    final region = img.copyCrop(
+      image,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+    );
+
     // Downscale then upscale for pixelation effect
-    final downscaled = img.copyResize(region,
+    final downscaled = img.copyResize(
+      region,
       width: (width / pixelSize).ceil(),
       height: (height / pixelSize).ceil(),
       interpolation: img.Interpolation.nearest,
     );
-    
-    final pixelated = img.copyResize(downscaled,
+
+    final pixelated = img.copyResize(
+      downscaled,
       width: width,
       height: height,
       interpolation: img.Interpolation.nearest,
     );
-    
+
     // Composite back
     return img.compositeImage(image, pixelated, dstX: x, dstY: y);
   }
@@ -204,13 +233,13 @@ class ImageProcessingService {
     final saturation = params['saturation'] as num? ?? 1.0;
     final value = params['value'] as num? ?? 1.0;
 
-    return img.adjustColor(image,
+    return img.adjustColor(
+      image,
       hue: hue.toDouble(),
       saturation: saturation.toDouble(),
       brightness: value.toDouble(),
     );
   }
-
 
   /// Adjust brightness
   img.Image _applyBrightness(img.Image image, Map<String, dynamic> params) {
@@ -223,7 +252,6 @@ class ImageProcessingService {
     final contrast = params['contrast'] as num? ?? 1.0;
     return img.adjustColor(image, contrast: contrast.toDouble());
   }
-
 
   /// Get interpolation method
   img.Interpolation _getInterpolation(String type) {
@@ -279,8 +307,10 @@ class ImageProcessingService {
     // Resize if too large (while maintaining aspect ratio)
     img.Image optimized = image;
     if (image.width > 4096 || image.height > 4096) {
-      final scaleFactor = 4096 / (image.width > image.height ? image.width : image.height);
-      optimized = img.copyResize(image,
+      final scaleFactor =
+          4096 / (image.width > image.height ? image.width : image.height);
+      optimized = img.copyResize(
+        image,
         width: (image.width * scaleFactor).toInt(),
         height: (image.height * scaleFactor).toInt(),
         interpolation: img.Interpolation.cubic,
@@ -292,13 +322,17 @@ class ImageProcessingService {
   }
 
   /// Generate thumbnail for preview
-  Future<Uint8List> generateThumbnail(Uint8List imageData, {int size = 256}) async {
+  Future<Uint8List> generateThumbnail(
+    Uint8List imageData, {
+    int size = 256,
+  }) async {
     final image = img.decodeImage(imageData);
     if (image == null) {
       throw Exception('Failed to decode image');
     }
 
-    final thumbnail = img.copyResize(image,
+    final thumbnail = img.copyResize(
+      image,
       width: size,
       height: size,
       interpolation: img.Interpolation.average,
@@ -319,12 +353,18 @@ class ImageProcessingService {
       'height': image.height,
       'format': getImageFormat(imageData),
       'size_bytes': imageData.length,
-      'megapixels': ImageResolution.calculateMegapixels(image.width, image.height),
+      'megapixels': ImageResolution.calculateMegapixels(
+        image.width,
+        image.height,
+      ),
     };
   }
 
   /// Compare two images for similarity (perceptual hash)
-  Future<double> compareImages(Uint8List image1Data, Uint8List image2Data) async {
+  Future<double> compareImages(
+    Uint8List image1Data,
+    Uint8List image2Data,
+  ) async {
     final img1 = img.decodeImage(image1Data);
     final img2 = img.decodeImage(image2Data);
 
@@ -345,7 +385,7 @@ class ImageProcessingService {
       for (int x = 0; x < img1.width; x++) {
         final pixel1 = img1.getPixel(x, y);
         final pixel2 = img2.getPixel(x, y);
-        
+
         if (pixel1 == pixel2) {
           matchingPixels++;
         }

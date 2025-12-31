@@ -1,6 +1,5 @@
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import '../models/image_proof.dart';
 import '../crypto/crypto_service.dart';
 import '../storage/storage_service.dart';
@@ -16,9 +15,9 @@ class ImageProofService {
     required CryptoService cryptoService,
     required StorageService storageService,
     required ImageProcessingService imageProcessingService,
-  })  : _cryptoService = cryptoService,
-        _storageService = storageService,
-        _imageProcessingService = imageProcessingService;
+  }) : _cryptoService = cryptoService,
+       _storageService = storageService,
+       _imageProcessingService = imageProcessingService;
 
   /// Generate a zero-knowledge proof for image manipulation
   Future<ImageProof> generateProof({
@@ -31,12 +30,16 @@ class ImageProofService {
     // Generate hashes for both images
     final originalHash = await _cryptoService.hashImage(originalImageData);
     final editedHash = await _cryptoService.hashImage(editedImageData);
-    
-    print('[ProofService] Generated editedImageHash: $editedHash');
-    print('[ProofService] editedImageData size: ${editedImageData.length} bytes');
+
+    debugPrint('[ProofService] Generated editedImageHash: $editedHash');
+    debugPrint(
+      '[ProofService] editedImageData size: ${editedImageData.length} bytes',
+    );
 
     // Get image resolution
-    final resolution = await _imageProcessingService.getImageResolution(originalImageData);
+    final resolution = await _imageProcessingService.getImageResolution(
+      originalImageData,
+    );
 
     // Generate the zero-knowledge proof
     final proofData = await _cryptoService.generateProof(
@@ -125,9 +128,7 @@ class ImageProofService {
   /// Get proofs by signer
   Future<List<ImageProof>> getProofsBySigner(String signerId) async {
     final allProofs = await _storageService.getAllProofs();
-    return allProofs
-        .where((proof) => proof.signerId == signerId)
-        .toList();
+    return allProofs.where((proof) => proof.signerId == signerId).toList();
   }
 
   /// Get proofs by date range
@@ -137,29 +138,42 @@ class ImageProofService {
   ) async {
     final allProofs = await _storageService.getAllProofs();
     return allProofs
-        .where((proof) =>
-            proof.createdAt.isAfter(startDate) && proof.createdAt.isBefore(endDate))
+        .where(
+          (proof) =>
+              proof.createdAt.isAfter(startDate) &&
+              proof.createdAt.isBefore(endDate),
+        )
         .toList();
   }
 
   /// Get proof statistics
   Future<ProofStatistics> getStatistics() async {
     final allProofs = await _storageService.getAllProofs();
-    
+
     final totalProofs = allProofs.length;
-    final verifiedProofs = allProofs
-        .where((proof) => proof.verificationStatus == VerificationStatus.verified)
-        .length;
-    final failedProofs = allProofs
-        .where((proof) => proof.verificationStatus == VerificationStatus.failed)
-        .length;
-    final anonymousProofs = allProofs
-        .where((proof) => proof.isAnonymousSigner)
-        .length;
+    final verifiedProofs =
+        allProofs
+            .where(
+              (proof) =>
+                  proof.verificationStatus == VerificationStatus.verified,
+            )
+            .length;
+    final failedProofs =
+        allProofs
+            .where(
+              (proof) => proof.verificationStatus == VerificationStatus.failed,
+            )
+            .length;
+    final anonymousProofs =
+        allProofs.where((proof) => proof.isAnonymousSigner).length;
 
     // Calculate average proof size
-    final totalSize = allProofs.fold<int>(0, (sum, proof) => sum + proof.proofSize);
-    final averageSize = totalProofs > 0 ? (totalSize / totalProofs).toDouble() : 0.0;
+    final totalSize = allProofs.fold<int>(
+      0,
+      (sum, proof) => sum + proof.proofSize,
+    );
+    final averageSize =
+        totalProofs > 0 ? (totalSize / totalProofs).toDouble() : 0.0;
 
     // Count by algorithm
     final algorithmCounts = <ProofAlgorithm, int>{};
@@ -215,8 +229,7 @@ class ProofStatistics {
   double get verificationRate =>
       totalProofs > 0 ? verifiedProofs / totalProofs : 0.0;
 
-  double get failureRate =>
-      totalProofs > 0 ? failedProofs / totalProofs : 0.0;
+  double get failureRate => totalProofs > 0 ? failedProofs / totalProofs : 0.0;
 
   double get anonymityRate =>
       totalProofs > 0 ? anonymousProofs / totalProofs : 0.0;

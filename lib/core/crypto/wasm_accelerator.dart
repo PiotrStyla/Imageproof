@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-import 'dart:js_interop';
 import 'package:flutter/foundation.dart';
 
 /// Revolutionary WebAssembly + WebGL GPU acceleration for zkSNARK proving
@@ -23,7 +21,7 @@ class WasmAccelerator {
   /// Check if GPU acceleration is available
   static Future<bool> _checkGPUAvailability() async {
     if (!kIsWeb) return false;
-    
+
     // Check for WebGL2 or WebGPU support
     return true; // Simplified - would check actual GPU capabilities
   }
@@ -33,9 +31,11 @@ class WasmAccelerator {
     // Load WASM module for cryptographic operations
     // In production, this would load actual Nova zkSNARK WASM binary
     debugPrint('Initializing WebAssembly zkSNARK module...');
-    
+
     // Initialize GPU compute shaders for parallel field operations
-    debugPrint('Setting up WebGL compute shaders for finite field arithmetic...');
+    debugPrint(
+      'Setting up WebGL compute shaders for finite field arithmetic...',
+    );
   }
 
   /// Accelerate proof generation using GPU parallelism
@@ -59,16 +59,18 @@ class WasmAccelerator {
   ) async {
     // Parallelize finite field operations across GPU cores
     // Each shader instance handles a subset of constraints
-    
+
     final startTime = DateTime.now();
-    
+
     // Simulate GPU-accelerated computation
     // In production, this would dispatch WebGL compute shaders
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     final endTime = DateTime.now();
-    debugPrint('GPU proof generation: ${endTime.difference(startTime).inMilliseconds}ms');
-    
+    debugPrint(
+      'GPU proof generation: ${endTime.difference(startTime).inMilliseconds}ms',
+    );
+
     return Uint8List(256); // Placeholder
   }
 
@@ -79,12 +81,14 @@ class WasmAccelerator {
   ) async {
     // Use WASM SIMD instructions for vectorized operations
     final startTime = DateTime.now();
-    
+
     await Future.delayed(const Duration(milliseconds: 200));
-    
+
     final endTime = DateTime.now();
-    debugPrint('WASM proof generation: ${endTime.difference(startTime).inMilliseconds}ms');
-    
+    debugPrint(
+      'WASM proof generation: ${endTime.difference(startTime).inMilliseconds}ms',
+    );
+
     return Uint8List(256); // Placeholder
   }
 
@@ -101,11 +105,11 @@ class WasmAccelerator {
 
     for (int i = 0; i < witnesses.length; i += batchSize) {
       final batch = witnesses.skip(i).take(batchSize).toList();
-      
+
       final batchResults = await Future.wait(
         batch.map((w) => accelerateProofGeneration(w, circuit)),
       );
-      
+
       results.addAll(batchResults);
     }
 

@@ -63,15 +63,18 @@ class HomeView extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.verified_user_rounded,
-                    color: Colors.deepPurple.shade700, size: 28),
+                Icon(
+                  Icons.verified_user_rounded,
+                  color: Colors.deepPurple.shade700,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Privacy with Proof: Zero-Knowledge Verification',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -79,9 +82,9 @@ class HomeView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'SealZero uses zero-knowledge proofs (ZKPs) to prove your redacted/blurred image is authentic, without revealing your original document.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
             ),
             const SizedBox(height: 16),
             _buildZkBenefitRow(
@@ -95,14 +98,16 @@ class HomeView extends StatelessWidget {
               context,
               icon: Icons.verified_outlined,
               title: 'Anyone can verify it',
-              description: 'Verification works without trusting your device or editor.',
+              description:
+                  'Verification works without trusting your device or editor.',
             ),
             const SizedBox(height: 10),
             _buildZkBenefitRow(
               context,
               icon: Icons.shield_outlined,
               title: 'Tamper-evident sharing',
-              description: 'If the image is modified later, verification fails.',
+              description:
+                  'If the image is modified later, verification fails.',
             ),
           ],
         ),
@@ -128,16 +133,16 @@ class HomeView extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 2),
               Text(
                 description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -162,9 +167,9 @@ class HomeView extends StatelessWidget {
                 Text(
                   'Quick Start Guide',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade900,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade900,
+                  ),
                 ),
               ],
             ),
@@ -244,16 +249,16 @@ class HomeView extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade900,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
               ),
             ],
           ),
@@ -277,10 +282,7 @@ class HomeView extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF4F46E5),
-                Color(0xFF7C3AED),
-              ],
+              colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
             ),
           ),
           child: Center(
@@ -288,7 +290,7 @@ class HomeView extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withAlpha(51),
                 borderRadius: BorderRadius.circular(28),
               ),
               child: const Icon(
@@ -307,7 +309,7 @@ class HomeView extends StatelessWidget {
     return Consumer<ImageProofViewModel>(
       builder: (context, viewModel, child) {
         final stats = viewModel.statistics;
-        
+
         return Row(
           children: [
             Expanded(
@@ -348,9 +350,9 @@ class HomeView extends StatelessWidget {
       children: [
         Text(
           'Quick Actions',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Row(
@@ -410,9 +412,9 @@ class HomeView extends StatelessWidget {
           children: [
             Text(
               'Recent Proofs',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...proofs.map((proof) => _ProofListItem(proof: proof)),
@@ -428,9 +430,9 @@ class HomeView extends StatelessWidget {
       children: [
         Text(
           'Privacy-Preserving Use Cases',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Row(
@@ -470,7 +472,8 @@ class HomeView extends StatelessWidget {
                 color: Colors.blue,
                 onTap: () {
                   _openExternalUrl(
-                      'https://youtube.com/shorts/EsyXVCHSogw?feature=share');
+                    'https://youtube.com/shorts/EsyXVCHSogw?feature=share',
+                  );
                 },
               ),
             ),
@@ -514,20 +517,17 @@ class _UseCaseCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text(description, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha(26),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -564,7 +564,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      color: color.withOpacity(0.1),
+      color: color.withAlpha(26),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -574,9 +574,9 @@ class _StatCard extends StatelessWidget {
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -621,7 +621,7 @@ class _ActionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha(26),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 32),
@@ -629,16 +629,16 @@ class _ActionCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ),
@@ -658,9 +658,7 @@ class _ProofListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.image),
-        ),
+        leading: const CircleAvatar(child: Icon(Icons.image)),
         title: Text('Proof ${proof.id.substring(0, 8)}'),
         subtitle: Text('Created ${_formatDate(proof.createdAt)}'),
         trailing: _getStatusIcon(proof.verificationStatus),
@@ -685,9 +683,6 @@ class _ProofListItem extends StatelessWidget {
   }
 
   Widget _getStatusIcon(dynamic status) {
-    return Icon(
-      Icons.check_circle,
-      color: Colors.green,
-    );
+    return Icon(Icons.check_circle, color: Colors.green);
   }
 }

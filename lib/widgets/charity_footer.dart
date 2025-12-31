@@ -23,21 +23,16 @@ class CharityFooter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  const Color(0xFF1E293B),
-                  const Color(0xFF0F172A),
-                ]
-              : [
-                  const Color(0xFF6366F1),
-                  const Color(0xFF4F46E5),
-                ],
+          colors:
+              isDark
+                  ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                  : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha(51),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -50,22 +45,16 @@ class CharityFooter extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 800),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withAlpha(26),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
+              border: Border.all(color: Colors.white.withAlpha(51), width: 1),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '💝',
-                      style: const TextStyle(fontSize: 32),
-                    ),
+                    Text('💝', style: const TextStyle(fontSize: 32)),
                     const SizedBox(width: 12),
                     Text(
                       'Support a Good Cause',
@@ -81,13 +70,14 @@ class CharityFooter extends StatelessWidget {
                   'If you like or use this app, please consider supporting the Hospice Foundation in Cracow, Poland. They provide compassionate end-of-life care and support for patients and their families.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withAlpha(242),
                     height: 1.6,
                   ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
-                  onPressed: () => _launchUrl('https://fundacja-hospicjum.org/'),
+                  onPressed:
+                      () => _launchUrl('https://fundacja-hospicjum.org/'),
                   icon: const Icon(Icons.favorite),
                   label: const Text('Donate Here'),
                   style: ElevatedButton.styleFrom(
@@ -111,7 +101,7 @@ class CharityFooter extends StatelessWidget {
                   'Your contribution makes a real difference in people\'s lives. Thank you for your generosity! 🙏',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withAlpha(230),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -139,9 +129,9 @@ class CharityFooter extends StatelessWidget {
               ),
               _FooterLink(
                 text: 'GitHub',
-                onTap: () => _launchUrl(
-                  'https://github.com/PiotrStyla/Imageproof',
-                ),
+                onTap:
+                    () =>
+                        _launchUrl('https://github.com/PiotrStyla/Imageproof'),
               ),
             ],
           ),
@@ -151,7 +141,7 @@ class CharityFooter extends StatelessWidget {
             '© ${DateTime.now().year} SealZero. Built with ❤️ using Flutter',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withAlpha(179),
             ),
           ),
           const SizedBox(height: 8),
@@ -159,7 +149,7 @@ class CharityFooter extends StatelessWidget {
             'Powered by Zero-Knowledge Cryptography | Making the Internet More Trustworthy',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withAlpha(153),
             ),
           ),
         ],
@@ -172,10 +162,7 @@ class _FooterLink extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
 
-  const _FooterLink({
-    required this.text,
-    required this.onTap,
-  });
+  const _FooterLink({required this.text, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -187,10 +174,10 @@ class _FooterLink extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withAlpha(230),
             fontSize: 14,
             decoration: TextDecoration.underline,
-            decorationColor: Colors.white.withOpacity(0.5),
+            decorationColor: Colors.white.withAlpha(128),
           ),
         ),
       ),

@@ -8,35 +8,35 @@ part 'image_proof.g.dart';
 class ImageProof {
   /// Unique identifier for the proof
   final String id;
-  
+
   /// Hash of the original image
   final String originalImageHash;
-  
+
   /// Hash of the edited image
   final String editedImageHash;
-  
+
   /// Zero-knowledge proof data
   final String proof;
-  
+
   /// List of transformations applied
   final List<ImageTransformation> transformations;
-  
+
   /// Timestamp when proof was generated
   @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   final DateTime createdAt;
-  
+
   /// Whether the signer is anonymous
   final bool isAnonymousSigner;
-  
+
   /// Optional signer identifier (null if anonymous)
   final String? signerId;
-  
+
   /// Proof size in bytes
   final int proofSize;
-  
+
   /// Verification status
   final VerificationStatus verificationStatus;
-  
+
   /// Metadata about the proof generation
   final ProofMetadata metadata;
 
@@ -107,9 +107,7 @@ class ImageProof {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ImageProof &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
+      other is ImageProof && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -132,14 +130,14 @@ class ImageProof {
 class ImageTransformation {
   /// Type of transformation
   final TransformationType type;
-  
+
   /// Parameters for the transformation
   final Map<String, dynamic> parameters;
-  
+
   /// Timestamp when transformation was applied
   @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   final DateTime appliedAt;
-  
+
   /// Whether this transformation is reversible
   final bool isReversible;
 
@@ -168,12 +166,12 @@ enum TransformationType {
   blurRegion,
   redactRegion,
   pixelateRegion,
-  
+
   // Technical transformations
   crop,
   resize,
   rotate,
-  
+
   // Aesthetic transformations (SECONDARY)
   colorAdjust,
   brightness,
@@ -181,31 +179,26 @@ enum TransformationType {
 }
 
 /// Verification status of a proof
-enum VerificationStatus {
-  pending,
-  verified,
-  failed,
-  expired,
-}
+enum VerificationStatus { pending, verified, failed, expired }
 
 /// Metadata about proof generation
 @JsonSerializable()
 class ProofMetadata {
   /// Time taken to generate proof in milliseconds
   final int generationTimeMs;
-  
+
   /// Memory usage during generation in MB
   final int memoryUsageMB;
-  
+
   /// Image resolution
   final ImageResolution resolution;
-  
+
   /// Platform where proof was generated
   final String platform;
-  
+
   /// App version
   final String appVersion;
-  
+
   /// Proof algorithm used
   final ProofAlgorithm algorithm;
 
@@ -258,9 +251,4 @@ class ImageResolution {
 }
 
 /// Proof generation algorithms
-enum ProofAlgorithm {
-  novaFolding,
-  novaPlus,
-  hyperNova,
-  customVIMz,
-}
+enum ProofAlgorithm { novaFolding, novaPlus, hyperNova, customVIMz }

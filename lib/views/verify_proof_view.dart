@@ -16,7 +16,8 @@ class VerifyProofView extends StatefulWidget {
   State<VerifyProofView> createState() => _VerifyProofViewState();
 }
 
-class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProviderStateMixin {
+class _VerifyProofViewState extends State<VerifyProofView>
+    with SingleTickerProviderStateMixin {
   ImageProof? _proofToVerify;
   bool? _verificationResult;
   Uint8List? _uploadedImage;
@@ -54,9 +55,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             onPressed: () {
               // QR code scanner for mobile
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('QR Scanner - Coming soon!'),
-                ),
+                const SnackBar(content: Text('QR Scanner - Coming soon!')),
               );
             },
             tooltip: 'Scan QR Code',
@@ -89,23 +88,23 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             Icon(
               Icons.verified_user,
               size: 120,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withAlpha(77),
             ),
             const SizedBox(height: 32),
             Text(
               'Verify Image Authenticity',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
               'Upload the PROOF FILE (.json) generated during image editing, NOT the edited image itself',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -113,9 +112,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.symmetric(horizontal: 40),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withAlpha(26),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withAlpha(77)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -125,9 +124,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                   Flexible(
                     child: Text(
                       'The proof file is a small JSON file (typically <11KB) with .json or .proof extension',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.blue[700],
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.blue[700]),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -149,7 +148,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withAlpha(26),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -161,25 +162,28 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                         const SizedBox(height: 24),
                         Text(
                           'Upload Proof File',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Select .json or .proof file',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '(NOT the image file)',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.orange[700],
-                                fontSize: 12,
-                              ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color: Colors.orange[700],
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
@@ -246,9 +250,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
           children: [
             Text(
               'Proof Details',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildDetailRow(
@@ -271,14 +275,12 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
               '${(proof.proofSize / 1024).toStringAsFixed(2)} KB',
               Icons.data_usage,
             ),
-            _buildDetailRow(
-              'Algorithm',
-              'Simple Metadata',
-              Icons.memory,
-            ),
+            _buildDetailRow('Algorithm', 'Simple Metadata', Icons.memory),
             _buildDetailRow(
               'Signer',
-              proof.isAnonymousSigner ? 'Anonymous' : proof.signerId ?? 'Unknown',
+              proof.isAnonymousSigner
+                  ? 'Anonymous'
+                  : proof.signerId ?? 'Unknown',
               Icons.person,
             ),
           ],
@@ -304,13 +306,16 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: isValid
-                        ? [Colors.green.shade400, Colors.green.shade700]
-                        : [Colors.red.shade400, Colors.red.shade700],
+                    colors:
+                        isValid
+                            ? [Colors.green.shade400, Colors.green.shade700]
+                            : [Colors.red.shade400, Colors.red.shade700],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: (isValid ? Colors.green : Colors.red).withOpacity(0.3),
+                      color: (isValid ? Colors.green : Colors.red).withAlpha(
+                        77,
+                      ),
                       blurRadius: 40,
                       spreadRadius: 10,
                     ),
@@ -327,18 +332,18 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             Text(
               isValid ? 'Proof Verified ✓' : 'Verification Failed ✗',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isValid ? Colors.green : Colors.red,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: isValid ? Colors.green : Colors.red,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               isValid
                   ? 'The image authenticity has been cryptographically verified'
                   : 'The proof could not be verified. The image may have been tampered with.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
@@ -360,13 +365,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: _buildProofDetailsCard(proof),
-                      ),
+                      Expanded(child: _buildProofDetailsCard(proof)),
                       const SizedBox(width: 24),
-                      Expanded(
-                        child: _buildImageVerificationSection(proof),
-                      ),
+                      Expanded(child: _buildImageVerificationSection(proof)),
                     ],
                   ),
                 );
@@ -413,15 +414,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
           Icon(icon, size: 20, color: Colors.grey),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            child: Text(label, style: const TextStyle(color: Colors.grey)),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -438,17 +433,20 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
       if (result != null && result.files.single.bytes != null) {
         final bytes = result.files.single.bytes!;
         final fileName = result.files.single.name.toLowerCase();
-        
+
         // Check if user uploaded an image file by mistake
-        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || 
-            fileName.endsWith('.png') || fileName.endsWith('.gif') ||
-            fileName.endsWith('.webp') || fileName.endsWith('.bmp')) {
+        if (fileName.endsWith('.jpg') ||
+            fileName.endsWith('.jpeg') ||
+            fileName.endsWith('.png') ||
+            fileName.endsWith('.gif') ||
+            fileName.endsWith('.webp') ||
+            fileName.endsWith('.bmp')) {
           if (mounted) {
             _showImageUploadError();
           }
           return;
         }
-        
+
         // Check for common image file signatures (magic bytes)
         if (bytes.length > 4) {
           // JPEG: FF D8 FF
@@ -459,20 +457,23 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             return;
           }
           // PNG: 89 50 4E 47
-          if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+          if (bytes[0] == 0x89 &&
+              bytes[1] == 0x50 &&
+              bytes[2] == 0x4E &&
+              bytes[3] == 0x47) {
             if (mounted) {
               _showImageUploadError();
             }
             return;
           }
         }
-        
+
         final jsonString = String.fromCharCodes(bytes);
         final proofJson = jsonDecode(jsonString);
-        
+
         final proof = ImageProof.fromJson(proofJson);
         setState(() => _proofToVerify = proof);
-        
+
         // Verify the proof
         final isValid = await viewModel.verifyProof(proof);
         setState(() => _verificationResult = isValid);
@@ -480,7 +481,8 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
     } on FormatException catch (e) {
       if (mounted) {
         // Check if it looks like binary data (image file)
-        if (e.toString().contains('Unexpected token') || e.toString().contains('not valid JSON')) {
+        if (e.toString().contains('Unexpected token') ||
+            e.toString().contains('not valid JSON')) {
           _showImageUploadError();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -508,65 +510,81 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
   void _showImageUploadError() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.error_outline, color: Colors.orange[700], size: 28),
-            const SizedBox(width: 12),
-            const Text('Wrong File Type'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'You uploaded an IMAGE file, but verification requires the PROOF file.',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.orange[700], size: 28),
+                const SizedBox(width: 12),
+                const Text('Wrong File Type'),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text('How to verify:'),
-            const SizedBox(height: 8),
-            _buildStep('1', 'Find the PROOF FILE (.json) that was downloaded when you generated the proof'),
-            _buildStep('2', 'Upload that .json file here (NOT the edited image)'),
-            _buildStep('3', 'The app will cryptographically verify the image authenticity'),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lightbulb_outline, color: Colors.blue, size: 20),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'The proof file is small (typically <11KB) and has a .json extension',
-                      style: TextStyle(fontSize: 12),
-                    ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'You uploaded an IMAGE file, but verification requires the PROOF file.',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                const Text('How to verify:'),
+                const SizedBox(height: 8),
+                _buildStep(
+                  '1',
+                  'Find the PROOF FILE (.json) that was downloaded when you generated the proof',
+                ),
+                _buildStep(
+                  '2',
+                  'Upload that .json file here (NOT the edited image)',
+                ),
+                _buildStep(
+                  '3',
+                  'The app will cryptographically verify the image authenticity',
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withAlpha(26),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.blue,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'The proof file is small (typically <11KB) and has a .json extension',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Got it'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _pickProofFile(
+                    Provider.of<ImageProofViewModel>(context, listen: false),
+                  );
+                },
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Try Again'),
+              ),
+            ],
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              _pickProofFile(Provider.of<ImageProofViewModel>(context, listen: false));
-            },
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Try Again'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -612,9 +630,9 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
             children: [
               Text(
                 'Recent Proofs',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -623,9 +641,7 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
                   itemBuilder: (context, index) {
                     final proof = viewModel.proofs[index];
                     return ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.image),
-                      ),
+                      leading: const CircleAvatar(child: Icon(Icons.image)),
                       title: Text('Proof ${proof.id.substring(0, 8)}'),
                       subtitle: Text(_formatDate(proof.createdAt)),
                       trailing: const Icon(Icons.arrow_forward),
@@ -683,149 +699,148 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
 
   Widget _buildImageVerificationSection(ImageProof proof) {
     return Card(
-          elevation: 4,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.image_search, color: Colors.blue.shade700),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Verify Image Matches This Proof',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                Icon(Icons.image_search, color: Colors.blue.shade700),
+                const SizedBox(width: 12),
                 Text(
-                  'Upload the edited image to verify it matches this proof',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                  'Verify Image Matches This Proof',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Upload the edited image to verify it matches this proof',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withAlpha(26),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withAlpha(77)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Upload the edited_image_*.jpg file that was downloaded alongside the proof. This verifies the edited/final image (with transformations applied) matches this proof. You do NOT need the original source image.',
+                      style: TextStyle(fontSize: 12, color: Colors.blue[900]),
+                    ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (_uploadedImage != null && _imageMatchResult != null)
+              _buildImageMatchResult()
+            else if (_isCheckingImageMatch)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Upload the edited_image_*.jpg file that was downloaded alongside the proof. This verifies the edited/final image (with transformations applied) matches this proof. You do NOT need the original source image.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue[900],
-                          ),
-                        ),
-                      ),
+                      CircularProgressIndicator(),
+                      SizedBox(height: 12),
+                      Text('Calculating image hash...'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                if (_uploadedImage != null && _imageMatchResult != null)
-                  _buildImageMatchResult()
-                else if (_isCheckingImageMatch)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 12),
-                          Text('Calculating image hash...'),
-                        ],
-                      ),
+              )
+            else
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => _pickImageToVerify(proof),
+                  icon: const Icon(Icons.upload_file, size: 26),
+                  label: const Text('Upload Edited Image'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(
+                      MediaQuery.of(context).size.width < 420 ? 240 : 320,
+                      56,
                     ),
-                  )
-                else
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _pickImageToVerify(proof),
-                      icon: const Icon(Icons.upload_file, size: 26),
-                      label: const Text('Upload Edited Image'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(
-                          MediaQuery.of(context).size.width < 420 ? 240 : 320,
-                          56,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 18,
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 18,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-              ],
-            ),
-          ),
-        );
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildImageMatchResult() {
     final isMatch = _imageMatchResult ?? false;
-    
+
     return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isMatch ? Colors.green.shade50 : Colors.red.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isMatch ? Colors.green.shade200 : Colors.red.shade200,
-              width: 2,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isMatch ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isMatch ? Colors.green.shade200 : Colors.red.shade200,
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isMatch ? Icons.check_circle : Icons.cancel,
+            color: isMatch ? Colors.green.shade700 : Colors.red.shade700,
+            size: 40,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isMatch ? 'Image Verified ✓' : 'Image Does NOT Match',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        isMatch ? Colors.green.shade900 : Colors.red.shade900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isMatch
+                      ? 'This edited image cryptographically matches the proof. The transformations are authentic and verified.'
+                      : 'This image does not match the proof. It may be a different edited version or has been tampered with.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color:
+                        isMatch ? Colors.green.shade700 : Colors.red.shade700,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                isMatch ? Icons.check_circle : Icons.cancel,
-                color: isMatch ? Colors.green.shade700 : Colors.red.shade700,
-                size: 40,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isMatch ? 'Image Verified ✓' : 'Image Does NOT Match',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isMatch ? Colors.green.shade900 : Colors.red.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isMatch
-                          ? 'This edited image cryptographically matches the proof. The transformations are authentic and verified.'
-                          : 'This image does not match the proof. It may be a different edited version or has been tampered with.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isMatch ? Colors.green.shade700 : Colors.red.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
+        ],
+      ),
+    );
   }
 
   Future<void> _pickImageToVerify(ImageProof proof) async {
@@ -844,12 +859,6 @@ class _VerifyProofViewState extends State<VerifyProofView> with SingleTickerProv
         // Calculate hash of uploaded image
         final cryptoService = getIt<CryptoService>();
         final imageHash = await cryptoService.hashImage(_uploadedImage!);
-        
-        // Debug logging
-        print('[Verify] Uploaded image size: ${_uploadedImage!.length} bytes');
-        print('[Verify] Uploaded image hash: $imageHash');
-        print('[Verify] Proof editedImageHash: ${proof.editedImageHash}');
-        print('[Verify] Hashes match: ${imageHash == proof.editedImageHash}');
 
         // Compare with proof's edited image hash
         final matches = imageHash == proof.editedImageHash;

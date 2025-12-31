@@ -1,16 +1,13 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import '../models/image_proof.dart';
 
 /// Simplified proof service - INSTANT generation
 class CryptoService {
-  bool _initialized = false;
-
-  Future<void> initialize() async {
-    _initialized = true;
-  }
+  Future<void> initialize() async {}
 
   Future<String> hashImage(Uint8List imageData) async {
     // NOTE: Full cryptographic hashing of large images can be very slow on Flutter Web.
@@ -59,8 +56,8 @@ class CryptoService {
     Uint8List editedImage,
     List<ImageTransformation> transformations,
   ) async {
-    print('[CryptoService] INSTANT proof - no blocking ops');
-    
+    developer.log('INSTANT proof - no blocking ops', name: 'CryptoService');
+
     final proof = {
       'version': 1,
       'algorithm': 'SIMPLE-METADATA',
@@ -70,8 +67,8 @@ class CryptoService {
       'timestamp': DateTime.now().toIso8601String(),
       'nonce': Random().nextInt(999999),
     };
-    
-    print('[CryptoService] Proof ready instantly');
+
+    developer.log('Proof ready instantly', name: 'CryptoService');
     return base64Encode(utf8.encode(jsonEncode(proof)));
   }
 
@@ -84,7 +81,5 @@ class CryptoService {
     return true;
   }
 
-  Future<void> cleanup() async {
-    _initialized = false;
-  }
+  Future<void> cleanup() async {}
 }

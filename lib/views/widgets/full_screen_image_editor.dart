@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math_64.dart' hide Colors;
 import '../../core/models/image_proof.dart';
 import 'package:image/image.dart' as img;
 
@@ -23,7 +22,8 @@ class FullScreenImageEditor extends StatefulWidget {
 }
 
 class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   final GlobalKey _imageKey = GlobalKey();
   double _currentZoom = 1.0;
   Offset? _selectionStart;
@@ -49,65 +49,79 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
               minScale: 1.0,
               maxScale: 10.0,
               boundaryMargin: const EdgeInsets.all(double.infinity),
-              panEnabled: _activeSelectionType == null, // Disable pan when selecting
-              scaleEnabled: _activeSelectionType == null, // Disable zoom gestures when selecting
+              panEnabled:
+                  _activeSelectionType == null, // Disable pan when selecting
+              scaleEnabled:
+                  _activeSelectionType ==
+                  null, // Disable zoom gestures when selecting
               onInteractionUpdate: (details) {
                 setState(() {
-                  _currentZoom = _transformationController.value.getMaxScaleOnAxis();
+                  _currentZoom =
+                      _transformationController.value.getMaxScaleOnAxis();
                 });
               },
-              child: _activeSelectionType != null
-                  ? GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onPanStart: (details) {
-                        final RenderBox? box = _imageKey.currentContext?.findRenderObject() as RenderBox?;
-                        if (box != null) {
-                          final offset = box.globalToLocal(details.globalPosition);
-                          setState(() {
-                            _selectionStart = offset;
-                            _selectionEnd = offset;
-                          });
-                        }
-                      },
-                      onPanUpdate: (details) {
-                        final RenderBox? box = _imageKey.currentContext?.findRenderObject() as RenderBox?;
-                        if (box != null) {
-                          final offset = box.globalToLocal(details.globalPosition);
-                          setState(() {
-                            _selectionEnd = offset;
-                          });
-                        }
-                      },
-                      onPanEnd: (details) {
-                        _createTransformationFromSelection();
-                      },
-                      child: Stack(
+              child:
+                  _activeSelectionType != null
+                      ? GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanStart: (details) {
+                          final RenderBox? box =
+                              _imageKey.currentContext?.findRenderObject()
+                                  as RenderBox?;
+                          if (box != null) {
+                            final offset = box.globalToLocal(
+                              details.globalPosition,
+                            );
+                            setState(() {
+                              _selectionStart = offset;
+                              _selectionEnd = offset;
+                            });
+                          }
+                        },
+                        onPanUpdate: (details) {
+                          final RenderBox? box =
+                              _imageKey.currentContext?.findRenderObject()
+                                  as RenderBox?;
+                          if (box != null) {
+                            final offset = box.globalToLocal(
+                              details.globalPosition,
+                            );
+                            setState(() {
+                              _selectionEnd = offset;
+                            });
+                          }
+                        },
+                        onPanEnd: (details) {
+                          _createTransformationFromSelection();
+                        },
+                        child: Stack(
+                          children: [
+                            Image.memory(
+                              key: _imageKey,
+                              widget.image,
+                              fit: BoxFit.contain,
+                            ),
+                            if (_selectionStart != null &&
+                                _selectionEnd != null)
+                              CustomPaint(
+                                painter: _SelectionPainter(
+                                  start: _selectionStart!,
+                                  end: _selectionEnd!,
+                                  color: _getSelectionColor(),
+                                ),
+                              ),
+                          ],
+                        ),
+                      )
+                      : Stack(
                         children: [
                           Image.memory(
                             key: _imageKey,
                             widget.image,
                             fit: BoxFit.contain,
                           ),
-                          if (_selectionStart != null && _selectionEnd != null)
-                            CustomPaint(
-                              painter: _SelectionPainter(
-                                start: _selectionStart!,
-                                end: _selectionEnd!,
-                                color: _getSelectionColor(),
-                              ),
-                            ),
                         ],
                       ),
-                    )
-                  : Stack(
-                      children: [
-                        Image.memory(
-                          key: _imageKey,
-                          widget.image,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
             ),
           ),
 
@@ -135,18 +149,28 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
                   const Spacer(),
                   Text(
                     'Full Screen Editor',
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       '${(_currentZoom * 100).toInt()}%',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -170,7 +194,8 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
                     tooltip: 'Zoom In',
                     onPressed: () {
                       final newScale = (_currentZoom * 1.5).clamp(1.0, 10.0);
-                      _transformationController.value = Matrix4.identity()..scale(newScale);
+                      _transformationController.value =
+                          Matrix4.identity()..scale(newScale);
                       setState(() => _currentZoom = newScale);
                     },
                   ),
@@ -179,7 +204,8 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
                     tooltip: 'Zoom Out',
                     onPressed: () {
                       final newScale = (_currentZoom / 1.5).clamp(1.0, 10.0);
-                      _transformationController.value = Matrix4.identity()..scale(newScale);
+                      _transformationController.value =
+                          Matrix4.identity()..scale(newScale);
                       setState(() => _currentZoom = newScale);
                     },
                   ),
@@ -210,54 +236,65 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
                   colors: [Colors.black87, Colors.transparent],
                 ),
               ),
-              child: _activeSelectionType != null
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.touch_app, color: _getSelectionColor(), size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Drag to select region • Scroll to zoom up to 1000%',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 16),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectionStart = null;
-                              _selectionEnd = null;
-                              _activeSelectionType = null;
-                            });
-                            widget.onSelectionTypeChanged(null);
-                          },
-                          child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-                        ),
-                      ],
-                    )
-                  : Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      children: [
-                        _buildToolButton(
-                          'Blur Region',
-                          Icons.blur_on,
-                          Colors.red,
-                          TransformationType.blurRegion,
-                        ),
-                        _buildToolButton(
-                          'Redact',
-                          Icons.block,
-                          Colors.black,
-                          TransformationType.redactRegion,
-                        ),
-                        _buildToolButton(
-                          'Pixelate',
-                          Icons.grid_on,
-                          Colors.deepOrange,
-                          TransformationType.pixelateRegion,
-                        ),
-                      ],
-                    ),
+              child:
+                  _activeSelectionType != null
+                      ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.touch_app,
+                            color: _getSelectionColor(),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Drag to select region • Scroll to zoom up to 1000%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectionStart = null;
+                                _selectionEnd = null;
+                                _activeSelectionType = null;
+                              });
+                              widget.onSelectionTypeChanged(null);
+                            },
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ],
+                      )
+                      : Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        children: [
+                          _buildToolButton(
+                            'Blur Region',
+                            Icons.blur_on,
+                            Colors.red,
+                            TransformationType.blurRegion,
+                          ),
+                          _buildToolButton(
+                            'Redact',
+                            Icons.block,
+                            Colors.black,
+                            TransformationType.redactRegion,
+                          ),
+                          _buildToolButton(
+                            'Pixelate',
+                            Icons.grid_on,
+                            Colors.deepOrange,
+                            TransformationType.pixelateRegion,
+                          ),
+                        ],
+                      ),
             ),
           ),
         ],
@@ -265,7 +302,12 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
     );
   }
 
-  Widget _buildToolButton(String label, IconData icon, Color color, TransformationType type) {
+  Widget _buildToolButton(
+    String label,
+    IconData icon,
+    Color color,
+    TransformationType type,
+  ) {
     return ElevatedButton.icon(
       onPressed: () {
         setState(() {
@@ -296,26 +338,35 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
   }
 
   void _createTransformationFromSelection() {
-    if (_selectionStart == null || _selectionEnd == null || _activeSelectionType == null) {
+    if (_selectionStart == null ||
+        _selectionEnd == null ||
+        _activeSelectionType == null) {
       return;
     }
 
-    final RenderBox? renderBox = _imageKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _imageKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final imageSize = renderBox.size;
-    
+
     final matrix = _transformationController.value;
     final inverseMatrix = Matrix4.inverted(matrix);
-    
-    final transformedStart = inverseMatrix.transform3(Vector3(_selectionStart!.dx, _selectionStart!.dy, 0));
-    final transformedEnd = inverseMatrix.transform3(Vector3(_selectionEnd!.dx, _selectionEnd!.dy, 0));
-    
-    final left = transformedStart.x.clamp(0.0, imageSize.width);
-    final top = transformedStart.y.clamp(0.0, imageSize.height);
-    final right = transformedEnd.x.clamp(0.0, imageSize.width);
-    final bottom = transformedEnd.y.clamp(0.0, imageSize.height);
-    
+
+    final transformedStart = MatrixUtils.transformPoint(
+      inverseMatrix,
+      _selectionStart!,
+    );
+    final transformedEnd = MatrixUtils.transformPoint(
+      inverseMatrix,
+      _selectionEnd!,
+    );
+
+    final left = transformedStart.dx.clamp(0.0, imageSize.width);
+    final top = transformedStart.dy.clamp(0.0, imageSize.height);
+    final right = transformedEnd.dx.clamp(0.0, imageSize.width);
+    final bottom = transformedEnd.dy.clamp(0.0, imageSize.height);
+
     final x = left < right ? left : right;
     final y = top < bottom ? top : bottom;
     final width = (left - right).abs();
@@ -348,7 +399,7 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
           'y': actualY,
           'width': actualWidth,
           'height': actualHeight,
-          'radius': 15
+          'radius': 15,
         };
         break;
       case TransformationType.redactRegion:
@@ -356,7 +407,7 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
           'x': actualX,
           'y': actualY,
           'width': actualWidth,
-          'height': actualHeight
+          'height': actualHeight,
         };
         break;
       case TransformationType.pixelateRegion:
@@ -365,7 +416,7 @@ class _FullScreenImageEditorState extends State<FullScreenImageEditor> {
           'y': actualY,
           'width': actualWidth,
           'height': actualHeight,
-          'pixelSize': 20
+          'pixelSize': 20,
         };
         break;
       default:
@@ -397,14 +448,16 @@ class _SelectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromPoints(start, end);
-    final paint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
-    
-    final borderPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+    final paint =
+        Paint()
+          ..color = color.withAlpha(77)
+          ..style = PaintingStyle.fill;
+
+    final borderPaint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
 
     canvas.drawRect(rect, paint);
     canvas.drawRect(rect, borderPaint);

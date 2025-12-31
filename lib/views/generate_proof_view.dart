@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 import 'dart:convert';
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:vector_math/vector_math_64.dart' hide Colors;
+import '../core/platform/file_downloader.dart';
 import '../core/viewmodels/image_proof_viewmodel.dart';
 import '../core/models/image_proof.dart';
 import '../core/crypto/crypto_service.dart';
@@ -28,16 +28,19 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   bool _anonymousMode = true;
   String? _signerId;
 
+  bool _showAdvancedTransformations = false;
+
   final ImagePicker _picker = ImagePicker();
-  
+
   // Interactive region selection
   Offset? _selectionStart;
   Offset? _selectionEnd;
   TransformationType? _activeSelectionType;
   final GlobalKey _imageKey = GlobalKey();
-  
+
   // Zoom and pan controls
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   double _currentZoom = 1.0;
 
   @override
@@ -84,8 +87,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   Widget _buildGeneratingView(ImageProofViewModel viewModel) {
     final progress = viewModel.generationProgress;
     final progressPercent = (progress * 100).toInt();
-    final estimatedTimeRemaining = ((1 - progress) * 300).toInt(); // ~3 min total
-    
+    final estimatedTimeRemaining =
+        ((1 - progress) * 300).toInt(); // ~3 min total
+
     String currentPhase;
     if (progress < 0.2) {
       currentPhase = '📸 Analyzing images...';
@@ -107,27 +111,25 @@ class _GenerateProofViewState extends State<GenerateProofView> {
             const SizedBox(
               width: 80,
               height: 80,
-              child: CircularProgressIndicator(
-                strokeWidth: 6,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 6),
             ),
             const SizedBox(height: 32),
-            
+
             // Title and time estimate
             Text(
               'Generating Zero-Knowledge Proof',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withAlpha(26),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withAlpha(77)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -148,7 +150,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Progress bar
             Container(
               constraints: const BoxConstraints(maxWidth: 500),
@@ -175,7 +177,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                       ),
                       Text(
                         '$progressPercent%',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).primaryColor,
                         ),
@@ -186,7 +190,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               ),
             ),
             const SizedBox(height: 40),
-            
+
             // Technical details card
             Container(
               constraints: const BoxConstraints(maxWidth: 500),
@@ -201,29 +205,44 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'What\'s Happening?',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildTechDetailRow(Icons.shield, '⚡ GPU-accelerated cryptography'),
+                  _buildTechDetailRow(
+                    Icons.shield,
+                    '⚡ GPU-accelerated cryptography',
+                  ),
                   const SizedBox(height: 8),
-                  _buildTechDetailRow(Icons.flash_on, '⚡ Instant metadata fingerprints'),
+                  _buildTechDetailRow(
+                    Icons.flash_on,
+                    '⚡ Instant metadata fingerprints',
+                  ),
                   const SizedBox(height: 8),
-                  _buildTechDetailRow(Icons.compress, '📦 Compressing to <11KB'),
+                  _buildTechDetailRow(
+                    Icons.compress,
+                    '📦 Compressing to <11KB',
+                  ),
                   const SizedBox(height: 8),
-                  _buildTechDetailRow(Icons.security, '🔐 Zero-knowledge proof generation'),
+                  _buildTechDetailRow(
+                    Icons.security,
+                    '🔐 Zero-knowledge proof generation',
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Tips card
             Container(
               constraints: const BoxConstraints(maxWidth: 500),
@@ -238,11 +257,17 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lightbulb_outline, color: Colors.green.shade700, size: 20),
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.green.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Did You Know?',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.green.shade900,
                         ),
@@ -287,10 +312,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
           ),
         ),
       ],
@@ -340,7 +362,8 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         ),
         _buildImageUploadCard(
           title: 'Original Image',
-          subtitle: 'Upload your unedited photo/document - the app will apply blur/redact for you',
+          subtitle:
+              'Upload your unedited photo/document - the app will apply blur/redact for you',
           image: _originalImage,
           onUpload: () => _pickImage(isOriginal: true),
           icon: Icons.upload_file,
@@ -361,224 +384,310 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     return Card(
       elevation: 4,
       child: InkWell(
-        onTap: onUpload,
+        onTap: image == null ? onUpload : _openFullScreenEditor,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           height: 300,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: image == null
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color.withOpacity(0.1),
-                      color.withOpacity(0.05),
+            gradient:
+                image == null
+                    ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [color.withAlpha(26), color.withAlpha(13)],
+                    )
+                    : null,
+          ),
+          child:
+              image == null
+                  ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 64, color: color),
+                      const SizedBox(height: 16),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        subtitle,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: onUpload,
+                        icon: const Icon(Icons.upload),
+                        label: const Text('Choose File'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: color,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
                     ],
                   )
-                : null,
-          ),
-          child: image == null
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 64, color: color),
-                    const SizedBox(height: 16),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: onUpload,
-                      icon: const Icon(Icons.upload),
-                      label: const Text('Choose File'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                )
-              : ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    children: [
-                      InteractiveViewer(
-                        transformationController: _transformationController,
-                        minScale: 1.0,
-                        maxScale: 4.0,
-                        onInteractionUpdate: (details) {
-                          setState(() {
-                            _currentZoom = _transformationController.value.getMaxScaleOnAxis();
-                          });
-                        },
-                        child: GestureDetector(
-                          onPanStart: _activeSelectionType != null ? (details) {
-                            final RenderBox box = context.findRenderObject() as RenderBox;
-                            final offset = box.globalToLocal(details.globalPosition);
+                  : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        InteractiveViewer(
+                          transformationController: _transformationController,
+                          minScale: 1.0,
+                          maxScale: 4.0,
+                          onInteractionUpdate: (details) {
                             setState(() {
-                              _selectionStart = offset;
-                              _selectionEnd = offset;
+                              _currentZoom =
+                                  _transformationController.value
+                                      .getMaxScaleOnAxis();
                             });
-                          } : null,
-                          onPanUpdate: _activeSelectionType != null ? (details) {
-                            final RenderBox box = context.findRenderObject() as RenderBox;
-                            final offset = box.globalToLocal(details.globalPosition);
-                            setState(() {
-                              _selectionEnd = offset;
-                            });
-                          } : null,
-                          onPanEnd: _activeSelectionType != null ? (details) {
-                            _createTransformationFromSelection();
-                          } : null,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.memory(
-                                key: _imageKey,
-                                image,
-                                fit: BoxFit.contain,
-                              ),
-                              if (_selectionStart != null && _selectionEnd != null)
-                                CustomPaint(
-                                  painter: _SelectionPainter(
-                                    start: _selectionStart!,
-                                    end: _selectionEnd!,
-                                    color: _getSelectionColor(),
-                                  ),
+                          },
+                          child: GestureDetector(
+                            onPanStart:
+                                _activeSelectionType != null
+                                    ? (details) {
+                                      final RenderBox box =
+                                          context.findRenderObject()
+                                              as RenderBox;
+                                      final offset = box.globalToLocal(
+                                        details.globalPosition,
+                                      );
+                                      setState(() {
+                                        _selectionStart = offset;
+                                        _selectionEnd = offset;
+                                      });
+                                    }
+                                    : null,
+                            onPanUpdate:
+                                _activeSelectionType != null
+                                    ? (details) {
+                                      final RenderBox box =
+                                          context.findRenderObject()
+                                              as RenderBox;
+                                      final offset = box.globalToLocal(
+                                        details.globalPosition,
+                                      );
+                                      setState(() {
+                                        _selectionEnd = offset;
+                                      });
+                                    }
+                                    : null,
+                            onPanEnd:
+                                _activeSelectionType != null
+                                    ? (details) {
+                                      _createTransformationFromSelection();
+                                    }
+                                    : null,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.memory(
+                                  key: _imageKey,
+                                  image,
+                                  fit: BoxFit.contain,
                                 ),
+                                if (_selectionStart != null &&
+                                    _selectionEnd != null)
+                                  CustomPaint(
+                                    painter: _SelectionPainter(
+                                      start: _selectionStart!,
+                                      end: _selectionEnd!,
+                                      color: _getSelectionColor(),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.fullscreen,
+                                        color: Colors.white,
+                                      ),
+                                      tooltip: 'Full Screen Editor',
+                                      onPressed: () => _openFullScreenEditor(),
+                                    ),
+                                    const Divider(
+                                      height: 1,
+                                      color: Colors.white24,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                      ),
+                                      tooltip: 'Zoom In',
+                                      onPressed: () {
+                                        final newScale = (_currentZoom * 1.3)
+                                            .clamp(1.0, 4.0);
+                                        _transformationController.value =
+                                            Matrix4.identity()..scale(newScale);
+                                        setState(() => _currentZoom = newScale);
+                                      },
+                                    ),
+                                    Text(
+                                      '${(_currentZoom * 100).toInt()}%',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.remove,
+                                        color: Colors.white,
+                                      ),
+                                      tooltip: 'Zoom Out',
+                                      onPressed: () {
+                                        final newScale = (_currentZoom / 1.3)
+                                            .clamp(1.0, 4.0);
+                                        _transformationController.value =
+                                            Matrix4.identity()..scale(newScale);
+                                        setState(() => _currentZoom = newScale);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.fit_screen,
+                                        color: Colors.white,
+                                      ),
+                                      tooltip: 'Reset Zoom',
+                                      onPressed: () {
+                                        _transformationController.value =
+                                            Matrix4.identity();
+                                        setState(() => _currentZoom = 1.0);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                ),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black54,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _originalImage = null;
+                                    _selectionStart = null;
+                                    _selectionEnd = null;
+                                    _activeSelectionType = null;
+                                    _transformationController.value =
+                                        Matrix4.identity();
+                                    _currentZoom = 1.0;
+                                  });
+                                },
+                              ),
                             ],
                           ),
                         ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black87,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.fullscreen, color: Colors.white),
-                                    tooltip: 'Full Screen Editor',
-                                    onPressed: () => _openFullScreenEditor(),
-                                  ),
-                                  const Divider(height: 1, color: Colors.white24),
-                                  IconButton(
-                                    icon: const Icon(Icons.add, color: Colors.white),
-                                    tooltip: 'Zoom In',
-                                    onPressed: () {
-                                      final newScale = (_currentZoom * 1.3).clamp(1.0, 4.0);
-                                      _transformationController.value = Matrix4.identity()..scale(newScale);
-                                      setState(() => _currentZoom = newScale);
-                                    },
-                                  ),
-                                  Text(
-                                    '${(_currentZoom * 100).toInt()}%',
-                                    style: const TextStyle(color: Colors.white, fontSize: 11),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.remove, color: Colors.white),
-                                    tooltip: 'Zoom Out',
-                                    onPressed: () {
-                                      final newScale = (_currentZoom / 1.3).clamp(1.0, 4.0);
-                                      _transformationController.value = Matrix4.identity()..scale(newScale);
-                                      setState(() => _currentZoom = newScale);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.fit_screen, color: Colors.white),
-                                    tooltip: 'Reset Zoom',
-                                    onPressed: () {
-                                      _transformationController.value = Matrix4.identity();
-                                      setState(() => _currentZoom = 1.0);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Colors.black54,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _originalImage = null;
-                                  _selectionStart = null;
-                                  _selectionEnd = null;
-                                  _activeSelectionType = null;
-                                  _transformationController.value = Matrix4.identity();
-                                  _currentZoom = 1.0;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_activeSelectionType != null)
-                        Positioned(
-                          bottom: 16,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.black87,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.touch_app, color: _getSelectionColor(), size: 20),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Drag to select region • Scroll to zoom',
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _activeSelectionType = null;
-                                        _selectionStart = null;
-                                        _selectionEnd = null;
-                                      });
-                                    },
-                                    child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-                                  ),
-                                ],
+                        if (_activeSelectionType != null)
+                          Positioned(
+                            bottom: 16,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.touch_app,
+                                      color: _getSelectionColor(),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Drag to select region • Scroll to zoom',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _activeSelectionType = null;
+                                          _selectionStart = null;
+                                          _selectionEnd = null;
+                                        });
+                                      },
+                                      child: const Text(
+                                        'Cancel',
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                        if (_activeSelectionType == null)
+                          Positioned(
+                            bottom: 16,
+                            left: 16,
+                            right: 16,
+                            child: ElevatedButton.icon(
+                              onPressed: _openFullScreenEditor,
+                              icon: const Icon(Icons.open_in_full),
+                              label: const Text(
+                                'Open Editor (Blur / Redact / Pixelate)',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
         ),
       ),
     );
   }
 
   Widget _buildTransformationSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -591,19 +700,19 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 const SizedBox(width: 12),
                 Text(
                   'Transformations Applied',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              'Select transformations that match the operations you applied',
+              'Choose a privacy tool below. We will open the editor and you can drag to select the region.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
@@ -616,11 +725,15 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade700,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Why this matters: Transformations are cryptographically proven in the zkSNARK. Verifiers can see exactly what operations were applied (crop, rotate, etc.) without seeing the original image.',
+                      'Why this matters: The proof records your privacy edits (blur/redact/pixelate) so anyone can verify the image wasn\'t tampered with, without seeing the original.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blue.shade900,
@@ -635,65 +748,94 @@ class _GenerateProofViewState extends State<GenerateProofView> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                // PRIVACY-FOCUSED TRANSFORMATIONS (PRIORITY)
                 _buildTransformationChip(
-                  '🔒 Blur Region',
+                  ' Blur Region',
                   Icons.blur_on,
                   Colors.red,
                   TransformationType.blurRegion,
                 ),
                 _buildTransformationChip(
-                  '⬛ Redact Region',
+                  ' Redact Region',
                   Icons.block,
                   Colors.black,
                   TransformationType.redactRegion,
                 ),
                 _buildTransformationChip(
-                  '🔲 Pixelate Region',
+                  ' Pixelate Region',
                   Icons.grid_on,
                   Colors.deepOrange,
                   TransformationType.pixelateRegion,
                 ),
-                // TECHNICAL TRANSFORMATIONS
-                _buildTransformationChip(
-                  'Crop',
-                  Icons.crop,
-                  Colors.blue,
-                  TransformationType.crop,
-                ),
-                _buildTransformationChip(
-                  'Resize',
-                  Icons.photo_size_select_large,
-                  Colors.green,
-                  TransformationType.resize,
-                ),
-                _buildTransformationChip(
-                  'Rotate',
-                  Icons.rotate_right,
-                  Colors.orange,
-                  TransformationType.rotate,
-                ),
-                // AESTHETIC TRANSFORMATIONS
-                _buildTransformationChip(
-                  'Color Adjust',
-                  Icons.palette,
-                  Colors.purple,
-                  TransformationType.colorAdjust,
-                ),
-                _buildTransformationChip(
-                  'Brightness',
-                  Icons.brightness_6,
-                  Colors.yellow,
-                  TransformationType.brightness,
-                ),
-                _buildTransformationChip(
-                  'Contrast',
-                  Icons.contrast,
-                  Colors.pink,
-                  TransformationType.contrast,
-                ),
               ],
             ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showAdvancedTransformations =
+                        !_showAdvancedTransformations;
+                  });
+                },
+                icon: Icon(
+                  _showAdvancedTransformations
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                  size: 20,
+                ),
+                label: Text(
+                  _showAdvancedTransformations
+                      ? 'Hide advanced tools'
+                      : 'Show advanced tools',
+                ),
+              ),
+            ),
+            if (_showAdvancedTransformations) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _buildTransformationChip(
+                    'Crop',
+                    Icons.crop,
+                    Colors.blue,
+                    TransformationType.crop,
+                  ),
+                  _buildTransformationChip(
+                    'Resize',
+                    Icons.photo_size_select_large,
+                    Colors.green,
+                    TransformationType.resize,
+                  ),
+                  _buildTransformationChip(
+                    'Rotate',
+                    Icons.rotate_right,
+                    Colors.orange,
+                    TransformationType.rotate,
+                  ),
+                  _buildTransformationChip(
+                    'Color Adjust',
+                    Icons.palette,
+                    Colors.purple,
+                    TransformationType.colorAdjust,
+                  ),
+                  _buildTransformationChip(
+                    'Brightness',
+                    Icons.brightness_6,
+                    Colors.yellow,
+                    TransformationType.brightness,
+                  ),
+                  _buildTransformationChip(
+                    'Contrast',
+                    Icons.contrast,
+                    Colors.pink,
+                    TransformationType.contrast,
+                  ),
+                ],
+              ),
+            ],
             if (_transformations.isNotEmpty) ...[
               const SizedBox(height: 24),
               const Divider(),
@@ -702,9 +844,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                 final index = entry.key;
                 final transform = entry.value;
                 return ListTile(
-                  leading: CircleAvatar(
-                    child: Text('${index + 1}'),
-                  ),
+                  leading: CircleAvatar(child: Text('${index + 1}')),
                   title: Text(_getTransformationName(transform.type)),
                   subtitle: Text(_getTransformationDescription(transform)),
                   trailing: Row(
@@ -753,22 +893,23 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           );
           return;
         }
-        
+
         // For region-based transformations, activate selection mode
         if (type == TransformationType.blurRegion ||
             type == TransformationType.redactRegion ||
             type == TransformationType.pixelateRegion) {
           setState(() {
-            _activeSelectionType = isActive ? null : type;
+            _activeSelectionType = type;
             _selectionStart = null;
             _selectionEnd = null;
           });
+          _openFullScreenEditor();
         } else {
           // For non-region transformations, add immediately
           _addTransformation(type);
         }
       },
-      backgroundColor: isActive ? color.withOpacity(0.3) : color.withOpacity(0.1),
+      backgroundColor: isActive ? color.withAlpha(77) : color.withAlpha(26),
       side: isActive ? BorderSide(color: color, width: 2) : null,
     );
   }
@@ -776,51 +917,46 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   Widget _buildGenerateButton(ImageProofViewModel viewModel) {
     final isGenerating = viewModel.isGenerating;
     final canGenerate = _transformations.isNotEmpty && !isGenerating;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       child: ElevatedButton(
         onPressed: canGenerate ? () => _generateProof(viewModel) : null,
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 48,
-            vertical: 20,
-          ),
-          textStyle: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
-          child: isGenerating
-              ? Row(
-                  key: const ValueKey('generating'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.onPrimary,
+          child:
+              isGenerating
+                  ? Row(
+                    key: const ValueKey('generating'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.onPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('Generating Proof...'),
-                  ],
-                )
-              : Row(
-                  key: const ValueKey('ready'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.security),
-                    const SizedBox(width: 8),
-                    const Text('Generate Zero-Knowledge Proof'),
-                  ],
-                ),
+                      const SizedBox(width: 12),
+                      const Text('Generating Proof...'),
+                    ],
+                  )
+                  : Row(
+                    key: const ValueKey('ready'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.security),
+                      const SizedBox(width: 8),
+                      const Text('Generate Zero-Knowledge Proof'),
+                    ],
+                  ),
         ),
       ),
     );
@@ -837,6 +973,11 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       if (result != null && result.files.single.bytes != null) {
         setState(() {
           _originalImage = result.files.single.bytes;
+          _transformations.clear();
+          _activeSelectionType = null;
+          _selectionStart = null;
+          _selectionEnd = null;
+          _showAdvancedTransformations = false;
         });
       }
     } catch (e) {
@@ -851,6 +992,11 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         final bytes = await image.readAsBytes();
         setState(() {
           _originalImage = bytes;
+          _transformations.clear();
+          _activeSelectionType = null;
+          _selectionStart = null;
+          _selectionEnd = null;
+          _showAdvancedTransformations = false;
         });
       }
     }
@@ -858,29 +1004,29 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
   void _editTransformation(int index) {
     final transform = _transformations[index];
-    final params = Map<String, dynamic>.from(transform.parameters);
-    
+
     showDialog(
       context: context,
-      builder: (context) => _EditTransformationDialog(
-        transformation: transform,
-        onSave: (updatedParams) {
-          setState(() {
-            _transformations[index] = ImageTransformation(
-              type: transform.type,
-              parameters: updatedParams,
-              appliedAt: DateTime.now(),
-              isReversible: transform.isReversible,
-            );
-          });
-        },
-      ),
+      builder:
+          (context) => _EditTransformationDialog(
+            transformation: transform,
+            onSave: (updatedParams) {
+              setState(() {
+                _transformations[index] = ImageTransformation(
+                  type: transform.type,
+                  parameters: updatedParams,
+                  appliedAt: DateTime.now(),
+                  isReversible: transform.isReversible,
+                );
+              });
+            },
+          ),
     );
   }
 
   void _addTransformation(TransformationType type) {
     final Map<String, dynamic> params;
-    
+
     switch (type) {
       case TransformationType.crop:
         params = {'x': 0, 'y': 0, 'width': 800, 'height': 600};
@@ -892,13 +1038,25 @@ class _GenerateProofViewState extends State<GenerateProofView> {
         params = {'angle': 90};
         break;
       case TransformationType.blurRegion:
-        params = {'x': 100, 'y': 100, 'width': 200, 'height': 200, 'radius': 15};
+        params = {
+          'x': 100,
+          'y': 100,
+          'width': 200,
+          'height': 200,
+          'radius': 15,
+        };
         break;
       case TransformationType.redactRegion:
         params = {'x': 100, 'y': 100, 'width': 200, 'height': 200};
         break;
       case TransformationType.pixelateRegion:
-        params = {'x': 100, 'y': 100, 'width': 200, 'height': 200, 'pixelSize': 20};
+        params = {
+          'x': 100,
+          'y': 100,
+          'width': 200,
+          'height': 200,
+          'pixelSize': 20,
+        };
         break;
       case TransformationType.colorAdjust:
         params = {'hue': 0.5, 'saturation': 1.2};
@@ -924,10 +1082,12 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   }
 
   String _getTransformationName(TransformationType type) {
-    return type.toString().split('.').last.replaceAllMapped(
-          RegExp(r'([A-Z])'),
-          (match) => ' ${match.group(0)}',
-        ).trim();
+    return type
+        .toString()
+        .split('.')
+        .last
+        .replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(0)}')
+        .trim();
   }
 
   String _getTransformationDescription(ImageTransformation transform) {
@@ -967,11 +1127,11 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     if (proof != null && mounted) {
       // Automatically download both files immediately after generation
       _downloadProofFile(proof);
-      
+
       // Small delay between downloads to avoid browser blocking
       await Future.delayed(const Duration(milliseconds: 300));
       _downloadOptimizedEditedImage(proof);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -988,7 +1148,9 @@ class _GenerateProofViewState extends State<GenerateProofView> {
                         'Proof Generated Successfully!',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      Text('Size: ${(proof.proofSize / 1024).toStringAsFixed(2)} KB'),
+                      Text(
+                        'Size: ${(proof.proofSize / 1024).toStringAsFixed(2)} KB',
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Files downloaded to your Downloads folder',
@@ -1024,79 +1186,93 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   void _showProofDetailsDialog(BuildContext context, ImageProof proof) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 28),
-            const SizedBox(width: 12),
-            const Text('Proof Generated Successfully!'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow('Proof ID', proof.id.substring(0, 16) + '...'),
-              _buildDetailRow('Size', '${(proof.proofSize / 1024).toStringAsFixed(2)} KB'),
-              _buildDetailRow('Transformations', '${proof.transformations.length}'),
-              _buildDetailRow('Created', _formatDateTime(proof.createdAt)),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.download, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '2 files ready to download:\n• Proof (.json) - Share with verifier\n• Edited image (.jpg) - Share for hash verification',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade900,
-                        ),
-                      ),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 28),
+                const SizedBox(width: 12),
+                const Text('Proof Generated Successfully!'),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailRow(
+                    'Proof ID',
+                    '${proof.id.substring(0, 16)}...',
+                  ),
+                  _buildDetailRow(
+                    'Size',
+                    '${(proof.proofSize / 1024).toStringAsFixed(2)} KB',
+                  ),
+                  _buildDetailRow(
+                    'Transformations',
+                    '${proof.transformations.length}',
+                  ),
+                  _buildDetailRow('Created', _formatDateTime(proof.createdAt)),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.download,
+                          color: Colors.blue.shade700,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '2 files ready to download:\n• Proof (.json) - Share with verifier\n• Edited image (.jpg) - Share for hash verification',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Close'),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  _downloadProofFile(proof);
+                },
+                icon: const Icon(Icons.description),
+                label: const Text('Proof'),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  _downloadOptimizedEditedImage(proof);
+                },
+                icon: const Icon(Icons.image),
+                label: const Text('Image'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  context.go('/verify');
+                },
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Verify Now'),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              _downloadProofFile(proof);
-            },
-            icon: const Icon(Icons.description),
-            label: const Text('Proof'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              _downloadOptimizedEditedImage(proof);
-            },
-            icon: const Icon(Icons.image),
-            label: const Text('Image'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.go('/verify');
-            },
-            icon: const Icon(Icons.verified_user),
-            label: const Text('Verify Now'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1134,35 +1310,23 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   void _downloadProofFile(ImageProof proof) {
     try {
       debugPrint('[Download] Starting proof download for ${proof.id}');
-      
+
+      if (!kIsWeb) {
+        throw UnsupportedError('Downloads are only supported on web.');
+      }
+
       // Convert proof to JSON
       final jsonString = jsonEncode(proof.toJson());
       debugPrint('[Download] JSON string length: ${jsonString.length}');
-      
-      final bytes = utf8.encode(jsonString);
+
+      final bytes = Uint8List.fromList(utf8.encode(jsonString));
       debugPrint('[Download] UTF-8 bytes length: ${bytes.length}');
-      
-      final base64Data = base64Encode(bytes);
-      debugPrint('[Download] Base64 length: ${base64Data.length}');
-      
-      // Use data URL instead of Blob (more reliable across browsers/proxies)
-      final dataUrl = 'data:application/json;base64,$base64Data';
-      debugPrint('[Download] Creating anchor element...');
-      
-      final anchor = html.AnchorElement(href: dataUrl)
-        ..setAttribute('download', 'sealzero_proof_${proof.id.substring(0, 8)}.json')
-        ..style.display = 'none';
-      
-      debugPrint('[Download] Appending to document body...');
-      html.document.body?.append(anchor);
-      
-      debugPrint('[Download] Triggering click...');
-      anchor.click();
-      
-      debugPrint('[Download] Removing anchor...');
-      anchor.remove();
-      
-      debugPrint('[Download] Proof download complete!');
+
+      FileDownloader.downloadBytes(
+        bytes: bytes,
+        mimeType: 'application/json',
+        fileName: 'sealzero_proof_${proof.id.substring(0, 8)}.json',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1176,7 +1340,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
     } catch (e, stackTrace) {
       debugPrint('[Download] ERROR: $e');
       debugPrint('[Download] Stack trace: $stackTrace');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1191,18 +1355,29 @@ class _GenerateProofViewState extends State<GenerateProofView> {
 
   void _downloadOptimizedEditedImage(ImageProof proof) async {
     try {
-      final viewModel = Provider.of<ImageProofViewModel>(context, listen: false);
+      final viewModel = Provider.of<ImageProofViewModel>(
+        context,
+        listen: false,
+      );
       final editedImage = viewModel.lastOptimizedEditedImage;
       final format = viewModel.lastOptimizedEditedImageFormat;
-      
+
+      if (!kIsWeb) {
+        throw UnsupportedError('Downloads are only supported on web.');
+      }
+
       if (editedImage != null && editedImage.isNotEmpty) {
         // Debug: Calculate hash of what we're downloading
         final cryptoService = getIt<CryptoService>();
         final downloadHash = await cryptoService.hashImage(editedImage);
         debugPrint('[Download] Edited image hash: $downloadHash');
         debugPrint('[Download] Proof edited hash: ${proof.editedImageHash}');
-        debugPrint('[Download] Hashes match: ${downloadHash == proof.editedImageHash}');
-        debugPrint('[Download] Image size: ${editedImage.length} bytes, format: $format');
+        debugPrint(
+          '[Download] Hashes match: ${downloadHash == proof.editedImageHash}',
+        );
+        debugPrint(
+          '[Download] Image size: ${editedImage.length} bytes, format: $format',
+        );
         final mimeType = switch (format) {
           'jpeg' => 'image/jpeg',
           'png' => 'image/png',
@@ -1217,15 +1392,11 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           _ => 'bin',
         };
 
-        // Use data URL instead of Blob (more reliable across browsers/proxies)
-        final base64Data = base64Encode(editedImage);
-        final dataUrl = 'data:$mimeType;base64,$base64Data';
-        final anchor = html.AnchorElement(href: dataUrl)
-          ..setAttribute('download', 'edited_image_${proof.id.substring(0, 8)}.$extension')
-          ..style.display = 'none';
-        html.document.body?.append(anchor);
-        anchor.click();
-        anchor.remove();
+        await FileDownloader.downloadBytes(
+          bytes: editedImage,
+          mimeType: mimeType,
+          fileName: 'edited_image_${proof.id.substring(0, 8)}.$extension',
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1273,29 +1444,38 @@ class _GenerateProofViewState extends State<GenerateProofView> {
   }
 
   void _createTransformationFromSelection() {
-    if (_selectionStart == null || _selectionEnd == null || _activeSelectionType == null) {
+    if (_selectionStart == null ||
+        _selectionEnd == null ||
+        _activeSelectionType == null) {
       return;
     }
 
     // Get the RenderBox of the image widget
-    final RenderBox? renderBox = _imageKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _imageKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final imageSize = renderBox.size;
-    
+
     // Transform coordinates by inverse of zoom matrix to get actual image coordinates
     final matrix = _transformationController.value;
     final inverseMatrix = Matrix4.inverted(matrix);
-    
-    final transformedStart = inverseMatrix.transform3(Vector3(_selectionStart!.dx, _selectionStart!.dy, 0));
-    final transformedEnd = inverseMatrix.transform3(Vector3(_selectionEnd!.dx, _selectionEnd!.dy, 0));
-    
+
+    final transformedStart = MatrixUtils.transformPoint(
+      inverseMatrix,
+      _selectionStart!,
+    );
+    final transformedEnd = MatrixUtils.transformPoint(
+      inverseMatrix,
+      _selectionEnd!,
+    );
+
     // Calculate selection rectangle
-    final left = transformedStart.x.clamp(0.0, imageSize.width);
-    final top = transformedStart.y.clamp(0.0, imageSize.height);
-    final right = transformedEnd.x.clamp(0.0, imageSize.width);
-    final bottom = transformedEnd.y.clamp(0.0, imageSize.height);
-    
+    final left = transformedStart.dx.clamp(0.0, imageSize.width);
+    final top = transformedStart.dy.clamp(0.0, imageSize.height);
+    final right = transformedEnd.dx.clamp(0.0, imageSize.width);
+    final bottom = transformedEnd.dy.clamp(0.0, imageSize.height);
+
     final x = left < right ? left : right;
     final y = top < bottom ? top : bottom;
     final width = (left - right).abs();
@@ -1334,7 +1514,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           'y': actualY,
           'width': actualWidth,
           'height': actualHeight,
-          'radius': 15
+          'radius': 15,
         };
         break;
       case TransformationType.redactRegion:
@@ -1342,7 +1522,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           'x': actualX,
           'y': actualY,
           'width': actualWidth,
-          'height': actualHeight
+          'height': actualHeight,
         };
         break;
       case TransformationType.pixelateRegion:
@@ -1351,7 +1531,7 @@ class _GenerateProofViewState extends State<GenerateProofView> {
           'y': actualY,
           'width': actualWidth,
           'height': actualHeight,
-          'pixelSize': 20
+          'pixelSize': 20,
         };
         break;
       default:
@@ -1380,22 +1560,33 @@ class _GenerateProofViewState extends State<GenerateProofView> {
       context: context,
       useSafeArea: false,
       barrierColor: Colors.black,
-      builder: (context) => Dialog.fullscreen(
-        child: FullScreenImageEditor(
-          image: _originalImage!,
-          activeSelectionType: _activeSelectionType,
-          onTransformationAdded: (transformation) {
-            setState(() {
-              _transformations.add(transformation);
-            });
-            Navigator.pop(context);
-          },
-          onSelectionTypeChanged: (type) {
-            setState(() => _activeSelectionType = type);
-          },
-        ),
-      ),
-    );
+      builder:
+          (context) => Dialog.fullscreen(
+            child: FullScreenImageEditor(
+              image: _originalImage!,
+              activeSelectionType: _activeSelectionType,
+              onTransformationAdded: (transformation) {
+                setState(() {
+                  _transformations.add(transformation);
+                  _activeSelectionType = null;
+                  _selectionStart = null;
+                  _selectionEnd = null;
+                });
+                Navigator.pop(context);
+              },
+              onSelectionTypeChanged: (type) {
+                setState(() => _activeSelectionType = type);
+              },
+            ),
+          ),
+    ).then((_) {
+      if (!mounted) return;
+      setState(() {
+        _activeSelectionType = null;
+        _selectionStart = null;
+        _selectionEnd = null;
+      });
+    });
   }
 }
 
@@ -1413,26 +1604,29 @@ class _SelectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromPoints(start, end);
-    
+
     // Draw filled rectangle with transparency
-    final fillPaint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
+    final fillPaint =
+        Paint()
+          ..color = color.withAlpha(77)
+          ..style = PaintingStyle.fill;
     canvas.drawRect(rect, fillPaint);
-    
+
     // Draw border
-    final borderPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+    final borderPaint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
     canvas.drawRect(rect, borderPaint);
-    
+
     // Draw corner handles
-    final handlePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    final handlePaint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
     final handleSize = 8.0;
-    
+
     canvas.drawCircle(Offset(rect.left, rect.top), handleSize, handlePaint);
     canvas.drawCircle(Offset(rect.right, rect.top), handleSize, handlePaint);
     canvas.drawCircle(Offset(rect.left, rect.bottom), handleSize, handlePaint);
@@ -1441,7 +1635,9 @@ class _SelectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SelectionPainter oldDelegate) =>
-      start != oldDelegate.start || end != oldDelegate.end || color != oldDelegate.color;
+      start != oldDelegate.start ||
+      end != oldDelegate.end ||
+      color != oldDelegate.color;
 }
 
 class _EditTransformationDialog extends StatefulWidget {
@@ -1454,7 +1650,8 @@ class _EditTransformationDialog extends StatefulWidget {
   });
 
   @override
-  State<_EditTransformationDialog> createState() => _EditTransformationDialogState();
+  State<_EditTransformationDialog> createState() =>
+      _EditTransformationDialogState();
 }
 
 class _EditTransformationDialogState extends State<_EditTransformationDialog> {
@@ -1464,7 +1661,7 @@ class _EditTransformationDialogState extends State<_EditTransformationDialog> {
   void initState() {
     super.initState();
     _controllers = {};
-    
+
     for (final entry in widget.transformation.parameters.entries) {
       _controllers[entry.key] = TextEditingController(
         text: entry.value.toString(),
@@ -1487,20 +1684,26 @@ class _EditTransformationDialogState extends State<_EditTransformationDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _controllers.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: TextField(
-                controller: entry.value,
-                decoration: InputDecoration(
-                  labelText: _formatParameterName(entry.key),
-                  border: const OutlineInputBorder(),
-                  helperText: _getParameterHelp(entry.key, widget.transformation.type),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-            );
-          }).toList(),
+          children:
+              _controllers.entries.map((entry) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: TextField(
+                    controller: entry.value,
+                    decoration: InputDecoration(
+                      labelText: _formatParameterName(entry.key),
+                      border: const OutlineInputBorder(),
+                      helperText: _getParameterHelp(
+                        entry.key,
+                        widget.transformation.type,
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
       ),
       actions: [
@@ -1529,19 +1732,21 @@ class _EditTransformationDialogState extends State<_EditTransformationDialog> {
   }
 
   String _getTransformationName(TransformationType type) {
-    return type.toString().split('.').last.replaceAllMapped(
-          RegExp(r'([A-Z])'),
-          (match) => ' ${match.group(0)}',
-        ).trim();
+    return type
+        .toString()
+        .split('.')
+        .last
+        .replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(0)}')
+        .trim();
   }
 
   String _formatParameterName(String param) {
-    return param.replaceAllMapped(
-      RegExp(r'([A-Z])'),
-      (match) => ' ${match.group(0)}',
-    ).trim().split(' ').map((word) => 
-      word[0].toUpperCase() + word.substring(1)
-    ).join(' ');
+    return param
+        .replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(0)}')
+        .trim()
+        .split(' ')
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 
   String? _getParameterHelp(String param, TransformationType type) {

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -72,7 +72,11 @@ class StorageService {
     ''');
   }
 
-  Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
+  Future<void> _upgradeDatabase(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
     // Handle database migrations
   }
 
@@ -86,28 +90,31 @@ class StorageService {
 
     // Write to SQLite for persistence (if available)
     if (_database != null) {
-      await _database!.insert(
-        'proofs',
-        {
-          'id': proof.id,
-          'original_image_hash': proof.originalImageHash,
-          'edited_image_hash': proof.editedImageHash,
-          'proof': proof.proof,
-          'transformations': jsonEncode(proof.transformations.map((t) => t.toJson()).toList()),
-          'created_at': proof.createdAt.millisecondsSinceEpoch,
-          'is_anonymous_signer': proof.isAnonymousSigner ? 1 : 0,
-          'signer_id': proof.signerId,
-          'proof_size': proof.proofSize,
-          'verification_status': proof.verificationStatus.toString(),
-          'metadata': jsonEncode(proof.metadata.toJson()),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _database!.insert('proofs', {
+        'id': proof.id,
+        'original_image_hash': proof.originalImageHash,
+        'edited_image_hash': proof.editedImageHash,
+        'proof': proof.proof,
+        'transformations': jsonEncode(
+          proof.transformations.map((t) => t.toJson()).toList(),
+        ),
+        'created_at': proof.createdAt.millisecondsSinceEpoch,
+        'is_anonymous_signer': proof.isAnonymousSigner ? 1 : 0,
+        'signer_id': proof.signerId,
+        'proof_size': proof.proofSize,
+        'verification_status': proof.verificationStatus.toString(),
+        'metadata': jsonEncode(proof.metadata.toJson()),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // Update FTS index
       await _database!.execute(
         'INSERT INTO proofs_fts(id, original_image_hash, edited_image_hash, transformations) VALUES(?, ?, ?, ?)',
-        [proof.id, proof.originalImageHash, proof.editedImageHash, jsonEncode(proof.transformations)],
+        [
+          proof.id,
+          proof.originalImageHash,
+          proof.editedImageHash,
+          jsonEncode(proof.transformations),
+        ],
       );
     }
 
@@ -119,7 +126,9 @@ class StorageService {
       if (!kIsWeb) {
         rethrow;
       }
-      print('[StorageService] Web storage unavailable, continuing without persistence: $e');
+      debugPrint(
+        '[StorageService] Web storage unavailable, continuing without persistence: $e',
+      );
     }
   }
 
@@ -148,7 +157,7 @@ class StorageService {
       if (!kIsWeb) {
         rethrow;
       }
-      print('[StorageService] Web storage update failed, continuing: $e');
+      debugPrint('[StorageService] Web storage update failed, continuing: $e');
     }
   }
 
@@ -210,22 +219,28 @@ class StorageService {
     _ensureInitialized();
 
     if (_database != null) {
-      final results = await _database!.rawQuery('''
+      final results = await _database!.rawQuery(
+        '''
         SELECT p.* FROM proofs p
         JOIN proofs_fts fts ON p.id = fts.id
         WHERE proofs_fts MATCH ?
         ORDER BY p.created_at DESC
-      ''', [query]);
+      ''',
+        [query],
+      );
       return results.map(_mapToProof).toList();
     }
 
     // On web, simple string search in cache
     final allProofs = await getAllProofs();
     final lowerQuery = query.toLowerCase();
-    return allProofs.where((proof) => 
-      proof.originalImageHash.toLowerCase().contains(lowerQuery) ||
-      proof.editedImageHash.toLowerCase().contains(lowerQuery)
-    ).toList();
+    return allProofs
+        .where(
+          (proof) =>
+              proof.originalImageHash.toLowerCase().contains(lowerQuery) ||
+              proof.editedImageHash.toLowerCase().contains(lowerQuery),
+        )
+        .toList();
   }
 
   /// Get proofs by signer ID
@@ -269,9 +284,13 @@ class StorageService {
 
     // On web, filter from cache
     final allProofs = await getAllProofs();
-    return allProofs.where((proof) => 
-      proof.createdAt.isAfter(startDate) && proof.createdAt.isBefore(endDate)
-    ).toList();
+    return allProofs
+        .where(
+          (proof) =>
+              proof.createdAt.isAfter(startDate) &&
+              proof.createdAt.isBefore(endDate),
+        )
+        .toList();
   }
 
   /// Delete proof and invalidate cache
@@ -279,16 +298,9 @@ class StorageService {
     _ensureInitialized();
 
     if (_database != null) {
-      await _database!.delete(
-        'proofs',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await _database!.delete('proofs', where: 'id = ?', whereArgs: [id]);
 
-      await _database!.execute(
-        'DELETE FROM proofs_fts WHERE id = ?',
-        [id],
-      );
+      await _database!.execute('DELETE FROM proofs_fts WHERE id = ?', [id]);
     }
 
     await _proofCache!.delete(id);
@@ -320,10 +332,14 @@ class StorageService {
     int totalSize = 0;
 
     if (_database != null) {
-      final countResult = await _database!.rawQuery('SELECT COUNT(*) as count FROM proofs');
+      final countResult = await _database!.rawQuery(
+        'SELECT COUNT(*) as count FROM proofs',
+      );
       totalProofs = Sqflite.firstIntValue(countResult) ?? 0;
 
-      final sizeResult = await _database!.rawQuery('SELECT SUM(proof_size) as total_size FROM proofs');
+      final sizeResult = await _database!.rawQuery(
+        'SELECT SUM(proof_size) as total_size FROM proofs',
+      );
       totalSize = Sqflite.firstIntValue(sizeResult) ?? 0;
     } else {
       // On web, count from cache
@@ -347,16 +363,21 @@ class StorageService {
     try {
       await _ensureBoxesOpen();
       final stats = await getStatistics();
-      await _metadataCache!.put('stats', jsonEncode({
-        'total_proofs': stats.totalProofs,
-        'total_size': stats.totalStorageBytes,
-        'last_updated': DateTime.now().millisecondsSinceEpoch,
-      }));
+      await _metadataCache!.put(
+        'stats',
+        jsonEncode({
+          'total_proofs': stats.totalProofs,
+          'total_size': stats.totalStorageBytes,
+          'last_updated': DateTime.now().millisecondsSinceEpoch,
+        }),
+      );
     } catch (e) {
       if (!kIsWeb) {
         rethrow;
       }
-      print('[StorageService] Web metadata cache update failed, continuing: $e');
+      debugPrint(
+        '[StorageService] Web metadata cache update failed, continuing: $e',
+      );
     }
   }
 
@@ -373,14 +394,17 @@ class StorageService {
       originalImageHash: row['original_image_hash'] as String,
       editedImageHash: row['edited_image_hash'] as String,
       proof: row['proof'] as String,
-      transformations: (jsonDecode(row['transformations'] as String) as List)
-          .map((t) => ImageTransformation.fromJson(t))
-          .toList(),
+      transformations:
+          (jsonDecode(row['transformations'] as String) as List)
+              .map((t) => ImageTransformation.fromJson(t))
+              .toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at'] as int),
       isAnonymousSigner: (row['is_anonymous_signer'] as int) == 1,
       signerId: row['signer_id'] as String?,
       proofSize: row['proof_size'] as int,
-      verificationStatus: _parseVerificationStatus(row['verification_status'] as String),
+      verificationStatus: _parseVerificationStatus(
+        row['verification_status'] as String,
+      ),
       metadata: ProofMetadata.fromJson(jsonDecode(row['metadata'] as String)),
     );
   }
@@ -394,7 +418,9 @@ class StorageService {
 
   void _ensureInitialized() {
     if (!_initialized) {
-      throw StateError('StorageService not initialized. Call initialize() first.');
+      throw StateError(
+        'StorageService not initialized. Call initialize() first.',
+      );
     }
   }
 
@@ -410,7 +436,11 @@ class StorageService {
   }
 
   /// Save to Hive with retry logic for transient failures
-  Future<void> _saveToHiveWithRetry(String key, String value, {int maxRetries = 3}) async {
+  Future<void> _saveToHiveWithRetry(
+    String key,
+    String value, {
+    int maxRetries = 3,
+  }) async {
     for (int attempt = 0; attempt < maxRetries; attempt++) {
       try {
         await _ensureBoxesOpen();
@@ -419,9 +449,13 @@ class StorageService {
       } catch (e) {
         if (attempt == maxRetries - 1) {
           if (!kIsWeb) {
-            throw Exception('Failed to save to Hive after $maxRetries attempts: $e');
+            throw Exception(
+              'Failed to save to Hive after $maxRetries attempts: $e',
+            );
           }
-          print('[StorageService] Hive save failed on web after $maxRetries attempts: $e');
+          debugPrint(
+            '[StorageService] Hive save failed on web after $maxRetries attempts: $e',
+          );
           return;
         }
         // Wait before retry (exponential backoff)
@@ -447,7 +481,7 @@ class StorageService {
   /// Import proofs from JSON backup
   Future<void> importProofs(String jsonData) async {
     final proofsList = jsonDecode(jsonData) as List;
-    
+
     for (final proofJson in proofsList) {
       final proof = ImageProof.fromJson(proofJson);
       await saveProof(proof);

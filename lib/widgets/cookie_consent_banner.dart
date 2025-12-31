@@ -57,7 +57,7 @@ class _CookieConsentBannerState extends State<CookieConsentBanner> {
           decoration: BoxDecoration(
             border: Border(
               top: BorderSide(
-                color: theme.primaryColor.withOpacity(0.3),
+                color: theme.primaryColor.withAlpha(77),
                 width: 2,
               ),
             ),
@@ -65,11 +65,7 @@ class _CookieConsentBannerState extends State<CookieConsentBanner> {
           child: SafeArea(
             child: Row(
               children: [
-                const Icon(
-                  Icons.cookie,
-                  size: 32,
-                  color: Color(0xFF6366F1),
-                ),
+                const Icon(Icons.cookie, size: 32, color: Color(0xFF6366F1)),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -105,7 +101,9 @@ class _CookieConsentBannerState extends State<CookieConsentBanner> {
                         setState(() => _showBanner = false);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Essential storage is required for basic functionality. Some features may not work.'),
+                            content: Text(
+                              'Essential storage is required for basic functionality. Some features may not work.',
+                            ),
                             duration: Duration(seconds: 4),
                           ),
                         );
