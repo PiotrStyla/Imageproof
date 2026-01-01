@@ -45,29 +45,21 @@ class TermsOfServiceView extends StatelessWidget {
               _buildSection(
                 context,
                 'Use License',
-                'This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).\n\n'
+                'This project is licensed under the Apache License, Version 2.0.\n\n'
                     'You are FREE to:\n'
-                    '• Use for personal, academic, and research purposes\n'
+                    '• Use the software for personal, academic, and commercial purposes\n'
                     '• Modify and adapt the source code\n'
                     '• Share and redistribute\n\n'
                     'Under these conditions:\n'
-                    '• Attribution: Give appropriate credit\n'
-                    '• NonCommercial: NO commercial use without permission\n'
-                    '• ShareAlike: Distribute modifications under same license\n\n'
+                    '• Include a copy of the license and preserve notices when redistributing\n'
+                    '• Trademarks are not granted by the license (name/logo usage is restricted)\n\n'
                     'See the LICENSE file in our GitHub repository for full details.',
               ),
               _buildSection(
                 context,
-                'Commercial Use Restrictions',
-                'Commercial use is PROHIBITED without explicit written permission.\n\n'
-                    'Commercial use includes:\n'
-                    '• Using in commercial products or services\n'
-                    '• Offering as a paid service\n'
-                    '• Using to generate revenue directly or indirectly\n'
-                    '• Integrating into commercial applications\n\n'
-                    'For commercial licensing inquiries:\n'
-                    'Email: p.styla@gmail.com\n'
-                    'X (Twitter): @PiotrSty',
+                'Commercial Use',
+                'Commercial use is permitted under the Apache License, Version 2.0.\n\n'
+                    'If you build on top of this project, please comply with the LICENSE terms and note that the license does not grant rights to use the SealZero name or logo.',
               ),
               _buildSection(
                 context,

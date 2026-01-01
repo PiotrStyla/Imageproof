@@ -4,13 +4,15 @@
 > Prove authenticity without revealing secrets
 > Based on the PETS 2025 paper by Dziembowski et al.
 
-**Fully client-side, verifiable privacy – check the code!**
+**Fully client-side, open-source for verifiable privacy – no data leaves your browser!**
+
+**Branding notice:** Nazwa SealZero i logo są zastrzeżone – forkuj swobodnie, ale nie używaj nazwy w konkurencyjnych produktach.
 
 A revolutionary Flutter application implementing folding-based zkSNARKs for efficiently proving image authenticity without revealing source content. Achieves 13-25% faster proof generation, <1s verification, and <11KB proof sizes.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.29+-blue.svg)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-3.7+-blue.svg)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-orange.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## 🚀 Revolutionary Features
 
@@ -389,13 +391,7 @@ Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTIN
 
 ## 📄 License
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License** (CC BY-NC-SA 4.0).
-
-**What this means:**
-- ✅ **Free for personal, academic, and research use**
-- ✅ You can modify and share the code
-- ❌ **Commercial use requires explicit written permission**
-- 📧 For commercial licensing: p.styla@gmail.com
+This project is licensed under the **Apache License, Version 2.0**.
 
 See the [LICENSE](LICENSE) file for full details.
 
