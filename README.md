@@ -4,6 +4,8 @@
 > Prove authenticity without revealing secrets
 > Based on the PETS 2025 paper by Dziembowski et al.
 
+**Fully client-side, verifiable privacy – check the code!**
+
 A revolutionary Flutter application implementing folding-based zkSNARKs for efficiently proving image authenticity without revealing source content. Achieves 13-25% faster proof generation, <1s verification, and <11KB proof sizes.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.29+-blue.svg)](https://flutter.dev/)
